@@ -392,51 +392,10 @@ theorem Mono.emp_dcsa [Kripke.Structure M] [SepC M] (S : Kripke.Semantics M B) [
 
 -- TODO: In upwards and downwards closed model, all programs in the flat semantics have monotonic denotation
 
-/-
-theorem Mono.strong_monotonicity
-    [SepC M] [Kripke.Structure M] (S : Kripke.Semantics M B)
-    [Kripke.Model M B] [Kripke.EmpSemantics M B S]
-    [Kripke.StrongWandSemantics M B S] [Kripke.StrongSepSemantics M B S] :
-    Kripke.monotonic_denotation S e := by
-  induction e
-  · apply Mono.base
-  · apply Mono.bot
-  · apply Mono.and <;> trivial
-  · apply Mono.or <;> trivial
-  · apply Mono.imp
-  · apply Mono.emp
-  · apply strong_sep
-  · apply strong_wand
-
-theorem Mono.ucsa_dcsa_weak_monotonicity
-    [SepC M] [Kripke.Structure M] (S : Kripke.Semantics M B)
-    [Kripke.Model M B] [Kripke.EmpSemantics M B S]
-    [Kripke.WeakWandSemantics M B S] [Kripke.WeakSepSemantics M B S]
-    [UCSA M] [DCSA M] :
-    Kripke.monotonic_denotation S e := by
-  induction e
-  · apply Mono.base
-  · apply Mono.bot
-  · apply Mono.and <;> trivial
-  · apply Mono.or <;> trivial
-  · apply Mono.imp
-  · apply Mono.emp
-  · apply weak_sep <;> trivial
-  · apply weak_wand <;> trivial
--/
-
-
-class Mono.MonotoneSemantics (M B : Type) [Kripke.Ord M] (S : Kripke.Semantics M B) where
-  mono : ∀ e, Kripke.monotonic_denotation S e
-
--- Instance of MonotoneSemantics for ...
-
-
 -- TODO: Semantic equivalence lemmas
 
-
 /-
-Resudie and unitality
+Residue and unitality
 -/
 
 class Unital (M : Type) where
@@ -447,58 +406,109 @@ class Unital (M : Type) where
 Soundness of IP rules against in a model that is upwards closed, downwards closed, and unital
 -/
 
-class SoundIPModel (M B : Type) [Kripke.Ord M] (S : Kripke.Semantics M B)
-                   [SepC M] [UCSA M] [DCSA M] [Unital M]
+class SoundIPModel (M : Type) [Kripke.Ord M] where
+  inst_sepC : SepC M
+  inst_ucsa : UCSA M
+  inst_dcsa : DCSA M
+  inst_unital : Unital M
+
+instance SoundIPModel_SepC [Kripke.Ord M] [I : SoundIPModel M] : SepC M := by cases I; trivial
+
+instance SoundIPModel_DCSA [Kripke.Ord M] [I : SoundIPModel M] : DCSA M := by cases I; trivial
+
+instance SoundIPModel_UCSA [Kripke.Ord M] [I : SoundIPModel M] : UCSA M := by cases I; trivial
+
+instance SoundIPModel_Unital [Kripke.Ord M] [I : SoundIPModel M] : Unital M := by cases I; trivial
 
 
--- TODO: In a SoundIPModel, all elements have monotonic denotation
--- Replace MonotoneSemantics below
+class WeakSemantics (M B : Type) [Kripke.Ord M] [SepC M] (S : Kripke.Semantics M B) where
+   inst_EmpSemantics : Kripke.EmpSemantics M B S
+   inst_WeakWandSemantics : Kripke.WeakWandSemantics M B S
+   inst_WeakSepSemantics : Kripke.WeakSepSemantics M B S
 
+instance WeakSemantics_EmpSemantics (M B : Type) [Kripke.Ord M] [SepC M] (S : Kripke.Semantics M B) [I : WeakSemantics M B S] :
+    Kripke.EmpSemantics M B S := by
+  cases I; trivial
 
-theorem Soundness.imp1 (R : L B -> Prop) [IP R] {φ ψ : L B} [Kripke.Ord M] (S : Kripke.Semantics M B) [Mono.MonotoneSemantics M B S] :
+instance WeakSemantics_WeakWandSemantics (M B : Type) [Kripke.Ord M] [SepC M] (S : Kripke.Semantics M B) [I : WeakSemantics M B S] :
+    Kripke.WeakWandSemantics M B S := by
+  cases I; trivial
+
+instance WeakSemantics_WeakSepSemantics (M B : Type) [Kripke.Ord M] [SepC M] (S : Kripke.Semantics M B) [I : WeakSemantics M B S] :
+    Kripke.WeakSepSemantics M B S := by
+  cases I; trivial
+
+/--
+Monotonicity for the weak semantics
+-/
+theorem SoundIPModel.mono (M B : Type) [Kripke.Structure M] (S : Kripke.Semantics M B) [Kripke.Model M B]
+        [SoundIPModel M] [WeakSemantics M B S] :
+    ∀ e, Kripke.monotonic_denotation S e := by
+  intro e
+  induction e
+  · apply Mono.base
+  · apply Mono.bot
+  · apply Mono.and <;> trivial
+  · apply Mono.or <;> trivial
+  · apply Mono.imp
+  · apply Mono.emp_dcsa
+  · apply Mono.weak_sep <;> trivial
+  · apply Mono.weak_wand <;> trivial
+
+theorem Soundness.imp1 (R : L B -> Prop) [IP R] {φ ψ : L B}
+    [Kripke.Structure M] (S : Kripke.Semantics M B) [Kripke.Model M B] [SoundIPModel M] [WeakSemantics M B S] :
     ∀ m : M, Kripke.Semantics.interp m <| imp φ <| imp ψ φ := by
   intro m
   rw [Kripke.Semantics.interp_imp]
   intro m0 _ Hφ
   rw [Kripke.Semantics.interp_imp]
   intro m1 Hm1 _
-  apply Mono.MonotoneSemantics.mono
+  apply SoundIPModel.mono
   · apply Hm1
   apply Hφ
 
-theorem Soundness.imp2 (R : L B -> Prop) [IP R] {φ ψ : L B} [Kripke.Ord M] (S : Kripke.Semantics M B) [Mono.MonotoneSemantics M B S] :
+
+
+
+/-
+theorem Soundness.imp2 (R : L B -> Prop) [IP R] {φ ψ : L B} [Kripke.Ord M] (S : Kripke.Semantics M B) [SoundIPModel M] :
     ∀ m : M, Kripke.Semantics.interp m <| imp (imp φ (imp ψ χ)) <| imp (imp φ ψ) <| imp φ χ := by
   sorry
 
-theorem Soundness.andI (R : L B -> Prop) [IP R] {φ ψ : L B} [Kripke.Ord M] (S : Kripke.Semantics M B) [Mono.MonotoneSemantics M B S] :
+theorem Soundness.andI (R : L B -> Prop) [IP R] {φ ψ : L B} [Kripke.Ord M] (S : Kripke.Semantics M B) [SoundIPModel M] :
     ∀ m : M, Kripke.Semantics.interp m <| imp φ <| imp ψ (and φ ψ) := by
   sorry
 
-theorem Soundness.andE1 (R : L B -> Prop) [IP R] {φ ψ : L B} [Kripke.Ord M] (S : Kripke.Semantics M B) [Mono.MonotoneSemantics M B S] :
+theorem Soundness.andE1 (R : L B -> Prop) [IP R] {φ ψ : L B} [Kripke.Ord M] (S : Kripke.Semantics M B) [SoundIPModel M] :
     ∀ m : M, Kripke.Semantics.interp m <| imp (and φ ψ) φ := by
   sorry
 
-theorem Soundness.andE2 (R : L B -> Prop) [IP R] {φ ψ : L B} [Kripke.Ord M] (S : Kripke.Semantics M B) [Mono.MonotoneSemantics M B S] :
+theorem Soundness.andE2 (R : L B -> Prop) [IP R] {φ ψ : L B} [Kripke.Ord M] (S : Kripke.Semantics M B) [SoundIPModel M] :
     ∀ m : M, Kripke.Semantics.interp m <| imp (and φ ψ) ψ := by
   sorry
 
-theorem Soundness.orI1 (R : L B -> Prop) [IP R] {φ ψ : L B} [Kripke.Ord M] (S : Kripke.Semantics M B) [Mono.MonotoneSemantics M B S] :
+theorem Soundness.orI1 (R : L B -> Prop) [IP R] {φ ψ : L B} [Kripke.Ord M] (S : Kripke.Semantics M B) [SoundIPModel M] :
     ∀ m : M, Kripke.Semantics.interp m <| imp φ (or φ ψ) := by
   sorry
 
-theorem Soundness.orI2 (R : L B -> Prop) [IP R] {φ ψ : L B} [Kripke.Ord M] (S : Kripke.Semantics M B) [Mono.MonotoneSemantics M B S] :
+theorem Soundness.orI2 (R : L B -> Prop) [IP R] {φ ψ : L B} [Kripke.Ord M] (S : Kripke.Semantics M B) [SoundIPModel M] :
     ∀ m : M, Kripke.Semantics.interp m <| imp ψ (or φ ψ) := by
   sorry
 
-theorem Soundness.orE (R : L B -> Prop) [IP R] {φ ψ : L B} [Kripke.Ord M] (S : Kripke.Semantics M B) [Mono.MonotoneSemantics M B S] :
+theorem Soundness.orE (R : L B -> Prop) [IP R] {φ ψ : L B} [Kripke.Ord M] (S : Kripke.Semantics M B) [SoundIPModel M] :
     ∀ m : M, Kripke.Semantics.interp m <|  imp (imp φ χ) <| imp (imp ψ χ) <| imp (or φ ψ) χ := by
   sorry
 
-theorem Soundness.botE (R : L B -> Prop) [IP R] {φ ψ : L B} [Kripke.Ord M] (S : Kripke.Semantics M B) [Mono.MonotoneSemantics M B S] :
+theorem Soundness.botE (R : L B -> Prop) [IP R] {φ ψ : L B} [Kripke.Ord M] (S : Kripke.Semantics M B) [SoundIPModel M] :
     ∀ m : M, Kripke.Semantics.interp m <| imp bot φ := by
   sorry
 
 -- Not sure about this one...
-theorem Soundness.mp  (R : L B -> Prop) [IP R] {φ ψ : L B} [Kripke.Ord M] (S : Kripke.Semantics M B) [Mono.MonotoneSemantics M B S] :
+theorem Soundness.mp (R : L B -> Prop) [IP R] {φ ψ : L B} [Kripke.Ord M] (S : Kripke.Semantics M B) [SoundIPModel M] :
     ∀ m : M, Kripke.Semantics.interp m φ -> Kripke.Semantics.interp m (imp φ ψ) -> Kripke.Semantics.interp m ψ := by
   sorry
+-/
+
+/-
+Soundness for the extensions
+-/
