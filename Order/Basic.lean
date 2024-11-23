@@ -563,7 +563,7 @@ theorem Soundness.scomm (R : L B -> Prop) [IP R] {φ : L B}
     [Kripke.Structure M] (S : Kripke.Semantics M B) [Kripke.Model M B] [SoundIPModel M] [FlatSemantics M B S] [SA M] :
     ∀ m : M, S.interp m <| imp (sep φ ψ) (sep ψ φ) := by
   simp [Kripke.Semantics.interp_imp]
-  intro m0 m1 m0m1
+  intro m0 m1 _
   simp [Kripke.WeakSepSemantics.interp_sep]
   intro m2 m3 m2m3 Hφ Hψ
   exists m3
@@ -579,17 +579,30 @@ theorem Soundness.sA1 (R : L B -> Prop) [IP R] {φ : L B}
     [Kripke.Structure M] (S : Kripke.Semantics M B) [Kripke.Model M B] [SoundIPModel M] [FlatSemantics M B S] [SA M] :
     ∀ m : M, (S.interp m <| imp (sep φ ψ) χ) -> (S.interp m <| imp φ (wand ψ χ)) := by
   simp [Kripke.Semantics.interp_imp, Kripke.WeakSepSemantics.interp_sep, Kripke.WeakWandSemantics.interp_wand]
+  intro m0 H m1 m0m1 Hφ m2 Hψ
+  -- apply (H (m1 ∗ m2) ?G1 m1 m2 (by rfl) Hφ Hψ)
+  -- Not sure if this is right
+  -- Unitality?
+  have U := Unital.unital (m1 ∗ m2)
+  simp [residue] at U
+
+  -- Downwards closure?
+  sorry
+
   -- intro m1 H m2 m1m2 Hφ m3 m4 m2m3 Hψ
   -- have H' := H (m3 ∗ m4)
   -- rcases (Unital.unital (m3 ∗ m4)) with ⟨ m1u, ⟨ m1r, Em1, Hm1r ⟩, Hu ⟩
   -- have H' := H (m3 ∗ m4)
   -- ?G1 m1 -- ?G1 m2 m4 ?G2 Hφ Hψ
   -- case G1 => exact Kripke.Structure.kle_trans m1 m2 m3 m1m2 m2m3
-  sorry
 
 theorem Soundness.sA2 (R : L B -> Prop) [IP R] {φ : L B}
     [Kripke.Structure M] (S : Kripke.Semantics M B) [Kripke.Model M B] [SoundIPModel M] [FlatSemantics M B S] [SA M] :
     ∀ m : M, (S.interp m <| imp φ (wand ψ χ)) -> (S.interp m <| imp (sep φ ψ) χ) := by
+  simp [Kripke.Semantics.interp_imp, Kripke.WeakSepSemantics.interp_sep, Kripke.WeakWandSemantics.interp_wand]
+  intro m0 H m1 m0m1 m2 m3 m2m3 Hφ Hψ
+  have H' := H
+  -- Probably need unitality or closure of some kind here?
   sorry
 
 theorem Soundness.semp (R : L B -> Prop) [IP R] {φ : L B}
@@ -598,23 +611,14 @@ theorem Soundness.semp (R : L B -> Prop) [IP R] {φ : L B}
   unfold L.iff
   simp [Kripke.Semantics.interp_and, Kripke.Semantics.interp_imp, Kripke.WeakSepSemantics.interp_sep, Kripke.EmpSemantics.interp_emp]
   intro m0
-  sorry
-  /-
   apply And.intro
-  · intro m1 _ m2 m2m1 m3 m4 m342 Hφ Hm4
-    unfold is_increasing at Hm4
-    apply SoundIPModel.mono _ _ _ _ _ m3 ?G2 ?G3
-    case G2 =>
-      apply Kripke.Structure.kle_trans
-      · apply Hm4
-        rw [SA.sepC_comm]
-      · rw [m342]
-        apply m2m1
-    case G3 => apply Hφ
+  · intro m1 _ m2 m3 m231 Hφ HI
+    apply SoundIPModel.mono _ _ _ _ _ m2 ?G2 ?G3
+    · apply HI
+      rw [SA.sepC_comm]
+      trivial
+    · trivial
   · intro m1 _ Hφ
-    exists m1
-    apply And.intro
-    · apply Kripke.Structure.kle_refl m1
     rcases (Unital.unital m1) with ⟨ m1u, ⟨ m1r, Em1, Hm1r ⟩, Hu ⟩
     exists m1r
     exists m1u
@@ -622,34 +626,25 @@ theorem Soundness.semp (R : L B -> Prop) [IP R] {φ : L B}
     · rw [SA.sepC_comm]
       trivial
     apply And.intro
-    · apply SoundIPModel.mono _ _ _ _ _ m1 ?G2 ?G3
-      case G2 => trivial
-      case G3 => trivial
+    · apply SoundIPModel.mono _ _ _ _ _ m1 Hm1r Hφ
     · trivial
-  -/
 
 theorem Soundness.sassoc (R : L B -> Prop) [IP R] {φ : L B}
     [Kripke.Structure M] (S : Kripke.Semantics M B) [Kripke.Model M B] [SoundIPModel M] [FlatSemantics M B S] [SA M] :
     ∀ m : M, S.interp m <| imp (sep (sep φ ψ) χ) <| (sep φ (sep ψ χ)) := by
   simp [Kripke.Semantics.interp_imp, Kripke.WeakSepSemantics.interp_sep]
-  sorry
-  /-
-  intros m0 m1 m0m1 m2 m2m1 m3 m4 m342 m5 m5m3 m6 m7 m675 Hφ Hψ Hχ
-  exists m2
-  apply And.intro
-  · trivial
-  sorry
-  exists m3
+  intro m0 m1 m0m1 m2 m3 m231 m4 m5 m452
+  subst m231
+  subst m452
+  intro Hφ Hψ Hχ
   exists m4
+  exists (m5 ∗ m3)
+  apply And.intro
+  · apply Eq.symm (SA.sepC_assoc m4 m5 m3)
   apply And.intro
   · trivial
-  apply And.intro
-  · apply SoundIPModel.mono
-    · -- Need m6 << m3?
-      sorry
-    · apply Hφ
-  sorry
-  -/
+  exists m5
+  exists m3
 
 theorem Soundness.smono (R : L B -> Prop) [IP R] {φ : L B}
     [Kripke.Structure M] (S : Kripke.Semantics M B) [Kripke.Model M B] [SoundIPModel M] [FlatSemantics M B S] [SA M] :
