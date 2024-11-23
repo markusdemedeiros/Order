@@ -433,28 +433,28 @@ instance SoundIPModel_Unital [Kripke.Ord M] [I : SoundIPModel M] : Unital M := b
 
 
 
-class StongSemantics (M B : Type) [Kripke.Ord M] [SepC M] (S : Kripke.Semantics M B) where
+class FlatSemantics (M B : Type) [Kripke.Ord M] [SepC M] (S : Kripke.Semantics M B) where
    inst_EmpSemantics : Kripke.EmpSemantics M B S
-   inst_WeakWandSemantics : Kripke.StrongWandSemantics M B S
-   inst_WeakSepSemantics : Kripke.StrongSepSemantics M B S
+   inst_WeakWandSemantics : Kripke.WeakWandSemantics M B S
+   inst_WeakSepSemantics : Kripke.WeakSepSemantics M B S
 
-instance StongSemantics_EmpSemantics (M B : Type) [Kripke.Ord M] [SepC M] (S : Kripke.Semantics M B) [I : StongSemantics M B S] :
+instance FlatSemantics_EmpSemantics (M B : Type) [Kripke.Ord M] [SepC M] (S : Kripke.Semantics M B) [I : FlatSemantics M B S] :
     Kripke.EmpSemantics M B S := by
   cases I; trivial
 
-instance StongSemantics_WeakWandSemantics (M B : Type) [Kripke.Ord M] [SepC M] (S : Kripke.Semantics M B) [I : StongSemantics M B S] :
-    Kripke.StrongWandSemantics M B S := by
+instance FlatSemantics_WeakWandSemantics (M B : Type) [Kripke.Ord M] [SepC M] (S : Kripke.Semantics M B) [I : FlatSemantics M B S] :
+    Kripke.WeakWandSemantics M B S := by
   cases I; trivial
 
-instance StongSemantics_WeakSepSemantics (M B : Type) [Kripke.Ord M] [SepC M] (S : Kripke.Semantics M B) [I : StongSemantics M B S] :
-    Kripke.StrongSepSemantics M B S := by
+instance FlatSemantics_WeakSepSemantics (M B : Type) [Kripke.Ord M] [SepC M] (S : Kripke.Semantics M B) [I : FlatSemantics M B S] :
+    Kripke.WeakSepSemantics M B S := by
   cases I; trivial
 
 /--
 Monotonicity for the weak semantics
 -/
 theorem SoundIPModel.mono (M B : Type) [Kripke.Structure M] (S : Kripke.Semantics M B) [Kripke.Model M B]
-        [SoundIPModel M] [StongSemantics M B S] :
+        [SoundIPModel M] [FlatSemantics M B S] :
     ∀ e, Kripke.monotonic_denotation S e := by
   intro e
   induction e
@@ -464,11 +464,11 @@ theorem SoundIPModel.mono (M B : Type) [Kripke.Structure M] (S : Kripke.Semantic
   · apply Mono.or <;> trivial
   · apply Mono.imp
   · apply Mono.emp_dcsa
-  · apply Mono.strong_sep <;> trivial
-  · apply Mono.strong_wand <;> trivial
+  · apply Mono.weak_sep <;> trivial
+  · apply Mono.weak_wand <;> trivial
 
 theorem Soundness.imp1 (R : L B -> Prop) [IP R] {φ ψ : L B}
-    [Kripke.Structure M] (S : Kripke.Semantics M B) [Kripke.Model M B] [SoundIPModel M] [StongSemantics M B S] :
+    [Kripke.Structure M] (S : Kripke.Semantics M B) [Kripke.Model M B] [SoundIPModel M] [FlatSemantics M B S] :
     ∀ m : M, S.interp m <| imp φ <| imp ψ φ := by
   intro m
   rw [Kripke.Semantics.interp_imp]
@@ -480,7 +480,7 @@ theorem Soundness.imp1 (R : L B -> Prop) [IP R] {φ ψ : L B}
   apply Hφ
 
 theorem Soundness.imp2 (R : L B -> Prop) [IP R] {φ ψ : L B}
-    [Kripke.Structure M] (S : Kripke.Semantics M B) [Kripke.Model M B] [SoundIPModel M] [StongSemantics M B S] :
+    [Kripke.Structure M] (S : Kripke.Semantics M B) [Kripke.Model M B] [SoundIPModel M] [FlatSemantics M B S] :
     ∀ m : M, S.interp m <| imp (imp φ (imp ψ χ)) <| imp (imp φ ψ) <| imp φ χ := by
   intro m
   simp [Kripke.Semantics.interp_imp]
@@ -491,7 +491,7 @@ theorem Soundness.imp2 (R : L B -> Prop) [IP R] {φ ψ : L B}
   apply (H3 _ Hm4 Hm4φ)
 
 theorem Soundness.andI (R : L B -> Prop) [IP R] {φ ψ : L B}
-    [Kripke.Structure M] (S : Kripke.Semantics M B) [Kripke.Model M B] [SoundIPModel M] [StongSemantics M B S] :
+    [Kripke.Structure M] (S : Kripke.Semantics M B) [Kripke.Model M B] [SoundIPModel M] [FlatSemantics M B S] :
     ∀ m : M, S.interp m <| imp φ <| imp ψ (and φ ψ) := by
   simp [Kripke.Semantics.interp_imp, Kripke.Semantics.interp_and]
   intro m0 m1 _ Hφ m3 Hm1m3 Hψ
@@ -501,19 +501,19 @@ theorem Soundness.andI (R : L B -> Prop) [IP R] {φ ψ : L B}
   · trivial
 
 theorem Soundness.andE1 (R : L B -> Prop) [IP R] {φ ψ : L B}
-    [Kripke.Structure M] (S : Kripke.Semantics M B) [Kripke.Model M B] [SoundIPModel M] [StongSemantics M B S] :
+    [Kripke.Structure M] (S : Kripke.Semantics M B) [Kripke.Model M B] [SoundIPModel M] [FlatSemantics M B S] :
     ∀ m : M, S.interp m <| imp (and φ ψ) φ := by
   simp [Kripke.Semantics.interp_imp, Kripke.Semantics.interp_and]
   intros
   trivial
 
 theorem Soundness.andE2 (R : L B -> Prop) [IP R] {φ ψ : L B}
-    [Kripke.Structure M] (S : Kripke.Semantics M B) [Kripke.Model M B] [SoundIPModel M] [StongSemantics M B S] :
+    [Kripke.Structure M] (S : Kripke.Semantics M B) [Kripke.Model M B] [SoundIPModel M] [FlatSemantics M B S] :
     ∀ m : M, S.interp m <| imp (and φ ψ) ψ := by
   simp [Kripke.Semantics.interp_imp, Kripke.Semantics.interp_and]
 
 theorem Soundness.orI1 (R : L B -> Prop) [IP R] {φ ψ : L B}
-    [Kripke.Structure M] (S : Kripke.Semantics M B) [Kripke.Model M B] [SoundIPModel M] [StongSemantics M B S] :
+    [Kripke.Structure M] (S : Kripke.Semantics M B) [Kripke.Model M B] [SoundIPModel M] [FlatSemantics M B S] :
     ∀ m : M, S.interp m <| imp φ (or φ ψ) := by
   simp [Kripke.Semantics.interp_imp, Kripke.Semantics.interp_or]
   intros
@@ -521,7 +521,7 @@ theorem Soundness.orI1 (R : L B -> Prop) [IP R] {φ ψ : L B}
   trivial
 
 theorem Soundness.orI2 (R : L B -> Prop) [IP R] {φ ψ : L B}
-    [Kripke.Structure M] (S : Kripke.Semantics M B) [Kripke.Model M B] [SoundIPModel M] [StongSemantics M B S] :
+    [Kripke.Structure M] (S : Kripke.Semantics M B) [Kripke.Model M B] [SoundIPModel M] [FlatSemantics M B S] :
     ∀ m : M, S.interp m <| imp ψ (or φ ψ) := by
   simp [Kripke.Semantics.interp_imp, Kripke.Semantics.interp_or]
   intros
@@ -529,7 +529,7 @@ theorem Soundness.orI2 (R : L B -> Prop) [IP R] {φ ψ : L B}
   trivial
 
 theorem Soundness.orE (R : L B -> Prop) [IP R] {φ ψ : L B}
-    [Kripke.Structure M] (S : Kripke.Semantics M B) [Kripke.Model M B] [SoundIPModel M] [StongSemantics M B S] :
+    [Kripke.Structure M] (S : Kripke.Semantics M B) [Kripke.Model M B] [SoundIPModel M] [FlatSemantics M B S] :
     ∀ m : M, S.interp m <| imp (imp φ χ) <| imp (imp ψ χ) <| imp (or φ ψ) χ := by
   simp [Kripke.Semantics.interp_imp, Kripke.Semantics.interp_or]
   intro m0 m1 _ H1 m2 m1m2 H2 m3 m2m3 H3
@@ -542,13 +542,13 @@ theorem Soundness.orE (R : L B -> Prop) [IP R] {φ ψ : L B}
     · trivial
 
 theorem Soundness.botE (R : L B -> Prop) [IP R] {φ : L B}
-    [Kripke.Structure M] (S : Kripke.Semantics M B) [Kripke.Model M B] [SoundIPModel M] [StongSemantics M B S] :
+    [Kripke.Structure M] (S : Kripke.Semantics M B) [Kripke.Model M B] [SoundIPModel M] [FlatSemantics M B S] :
     ∀ m : M, S.interp m <| imp bot φ := by
   simp [Kripke.Semantics.interp_imp, Kripke.Semantics.interp_bot]
 
 -- In this one, should m be the same in each? Or should it increase?
 theorem Soundness.mp (R : L B -> Prop) [IP R] {φ ψ : L B}
-    [Kripke.Structure M] (S : Kripke.Semantics M B) [Kripke.Model M B] [SoundIPModel M] [StongSemantics M B S] :
+    [Kripke.Structure M] (S : Kripke.Semantics M B) [Kripke.Model M B] [SoundIPModel M] [FlatSemantics M B S] :
     ∀ m : M, S.interp m φ -> S.interp m (imp φ ψ) -> S.interp m ψ := by
   simp [Kripke.Semantics.interp_imp]
   intro m Hφ H
@@ -559,42 +559,47 @@ theorem Soundness.mp (R : L B -> Prop) [IP R] {φ ψ : L B}
 /-
 Soundness for the SL axioms
 -/
-
-
 theorem Soundness.scomm (R : L B -> Prop) [IP R] {φ : L B}
-    [Kripke.Structure M] (S : Kripke.Semantics M B) [Kripke.Model M B] [SoundIPModel M] [StongSemantics M B S] [SA M] :
+    [Kripke.Structure M] (S : Kripke.Semantics M B) [Kripke.Model M B] [SoundIPModel M] [FlatSemantics M B S] [SA M] :
     ∀ m : M, S.interp m <| imp (sep φ ψ) (sep ψ φ) := by
   simp [Kripke.Semantics.interp_imp]
-  intro m0 m1 _
-  simp [Kripke.StrongSepSemantics.interp_sep]
-  intro m2 m2m1 m3 m4 m3m4m2 Hφ Hψ
-  exists (m4 ∗ m3)
+  intro m0 m1 m0m1
+  simp [Kripke.WeakSepSemantics.interp_sep]
+  intro m2 m3 m2m3 Hφ Hψ
+  exists m3
+  exists m2
   apply And.intro
   · rw [SA.sepC_comm]
-    apply Kripke.Structure.kle_trans _ m2
-    · rw [<- m3m4m2]
-      apply Kripke.Structure.kle_refl
-    · trivial
-  exists m4
-  exists m3
+    trivial
+  apply And.intro
+  · trivial
+  · trivial
 
 theorem Soundness.sA1 (R : L B -> Prop) [IP R] {φ : L B}
-    [Kripke.Structure M] (S : Kripke.Semantics M B) [Kripke.Model M B] [SoundIPModel M] [StongSemantics M B S] [SA M] :
+    [Kripke.Structure M] (S : Kripke.Semantics M B) [Kripke.Model M B] [SoundIPModel M] [FlatSemantics M B S] [SA M] :
     ∀ m : M, (S.interp m <| imp (sep φ ψ) χ) -> (S.interp m <| imp φ (wand ψ χ)) := by
+  simp [Kripke.Semantics.interp_imp, Kripke.WeakSepSemantics.interp_sep, Kripke.WeakWandSemantics.interp_wand]
+  -- intro m1 H m2 m1m2 Hφ m3 m4 m2m3 Hψ
+  -- have H' := H (m3 ∗ m4)
+  -- rcases (Unital.unital (m3 ∗ m4)) with ⟨ m1u, ⟨ m1r, Em1, Hm1r ⟩, Hu ⟩
+  -- have H' := H (m3 ∗ m4)
+  -- ?G1 m1 -- ?G1 m2 m4 ?G2 Hφ Hψ
+  -- case G1 => exact Kripke.Structure.kle_trans m1 m2 m3 m1m2 m2m3
   sorry
 
 theorem Soundness.sA2 (R : L B -> Prop) [IP R] {φ : L B}
-    [Kripke.Structure M] (S : Kripke.Semantics M B) [Kripke.Model M B] [SoundIPModel M] [StongSemantics M B S] [SA M] :
+    [Kripke.Structure M] (S : Kripke.Semantics M B) [Kripke.Model M B] [SoundIPModel M] [FlatSemantics M B S] [SA M] :
     ∀ m : M, (S.interp m <| imp φ (wand ψ χ)) -> (S.interp m <| imp (sep φ ψ) χ) := by
   sorry
 
-
 theorem Soundness.semp (R : L B -> Prop) [IP R] {φ : L B}
-    [Kripke.Structure M] (S : Kripke.Semantics M B) [Kripke.Model M B] [SoundIPModel M] [StongSemantics M B S] [SA M] :
+    [Kripke.Structure M] (S : Kripke.Semantics M B) [Kripke.Model M B] [SoundIPModel M] [FlatSemantics M B S] [SA M] :
     ∀ m : M, S.interp m <| iff (sep φ emp) φ := by
   unfold L.iff
-  simp [Kripke.Semantics.interp_and, Kripke.Semantics.interp_imp, Kripke.StrongSepSemantics.interp_sep, Kripke.EmpSemantics.interp_emp]
+  simp [Kripke.Semantics.interp_and, Kripke.Semantics.interp_imp, Kripke.WeakSepSemantics.interp_sep, Kripke.EmpSemantics.interp_emp]
   intro m0
+  sorry
+  /-
   apply And.intro
   · intro m1 _ m2 m2m1 m3 m4 m342 Hφ Hm4
     unfold is_increasing at Hm4
@@ -621,15 +626,19 @@ theorem Soundness.semp (R : L B -> Prop) [IP R] {φ : L B}
       case G2 => trivial
       case G3 => trivial
     · trivial
+  -/
 
 theorem Soundness.sassoc (R : L B -> Prop) [IP R] {φ : L B}
-    [Kripke.Structure M] (S : Kripke.Semantics M B) [Kripke.Model M B] [SoundIPModel M] [StongSemantics M B S] [SA M] :
+    [Kripke.Structure M] (S : Kripke.Semantics M B) [Kripke.Model M B] [SoundIPModel M] [FlatSemantics M B S] [SA M] :
     ∀ m : M, S.interp m <| imp (sep (sep φ ψ) χ) <| (sep φ (sep ψ χ)) := by
-  simp [Kripke.Semantics.interp_imp, Kripke.StrongSepSemantics.interp_sep]
+  simp [Kripke.Semantics.interp_imp, Kripke.WeakSepSemantics.interp_sep]
+  sorry
+  /-
   intros m0 m1 m0m1 m2 m2m1 m3 m4 m342 m5 m5m3 m6 m7 m675 Hφ Hψ Hχ
   exists m2
   apply And.intro
   · trivial
+  sorry
   exists m3
   exists m4
   apply And.intro
@@ -640,9 +649,10 @@ theorem Soundness.sassoc (R : L B -> Prop) [IP R] {φ : L B}
       sorry
     · apply Hφ
   sorry
+  -/
 
 theorem Soundness.smono (R : L B -> Prop) [IP R] {φ : L B}
-    [Kripke.Structure M] (S : Kripke.Semantics M B) [Kripke.Model M B] [SoundIPModel M] [StongSemantics M B S] [SA M] :
+    [Kripke.Structure M] (S : Kripke.Semantics M B) [Kripke.Model M B] [SoundIPModel M] [FlatSemantics M B S] [SA M] :
     ∀ m : M, (S.interp m <| imp φ1 ψ1) -> (S.interp m <| imp φ2 ψ2) -> (S.interp m <| imp (sep φ1 φ2) (sep ψ1 ψ2)) := by
   sorry
 
