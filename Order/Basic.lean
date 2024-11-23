@@ -130,8 +130,8 @@ class Kripke.Structure (M : Type) extends Kripke.Ord M where
   kle_refl : ∀ m, kle m m
   kle_trans : ∀ m1 m2 m3, kle m1 m2 -> kle m2 m3 -> kle m1 m3
 
-class Kripke.Model (M B : Type) [Kripke.Structure M] extends Kripke.AtomicInterp M B where
-  kle_ainterp_mono : ∀ m n σ, m << n -> ainterp m σ -> ainterp n σ
+class Kripke.Model (M B : Type) [Kripke.Structure M] [I : Kripke.AtomicInterp M B] where
+  kle_ainterp_mono : ∀ m n σ, m << n -> I.ainterp m σ -> I.ainterp n σ
 
 -- General interface for Kripke Semantics
 class Kripke.Semantics (M B : Type) [Kripke.Ord M] extends Kripke.AtomicInterp M B where
@@ -158,6 +158,9 @@ class Kripke.WeakWandSemantics (M B : Type) [Kripke.Ord M] [SepC M] (S : Kripke.
 class Kripke.WeakSepSemantics (M B : Type) [Kripke.Ord M] [SepC M] (S : Kripke.Semantics M B) where
   interp_sep : S.interp m (L.sep l r) = ∃ m1 m2 : M, m1 ∗ m2 = m ∧ S.interp m1 l ∧ S.interp m2 r
 
+-- Interface for Kripke semantics with emp
+class Kripke.EmpSemantics  (M B : Type) [Kripke.Ord M] [SepC M] (S : Kripke.Semantics M B) where
+  interp_emp  : S.interp m L.emp = is_increasing m
 
 /-
 Instances of Kripke semantics
@@ -167,7 +170,7 @@ Instances of Kripke semantics
 Flat semantics: both sep and wand are weak
 -/
 @[simp]
-def Kripke.interp_flat [Kripke.Structure M] [Kripke.Model M B] [SepC M] (m : M) (e : L B) :  Prop :=
+def Kripke.interp_flat [Kripke.Structure M] [Kripke.AtomicInterp M B] [SepC M] (m : M) (e : L B) :  Prop :=
   match e with
   | L.base b   => Kripke.AtomicInterp.ainterp m b
   | L.bot      => False
@@ -182,7 +185,7 @@ def Kripke.interp_flat [Kripke.Structure M] [Kripke.Model M B] [SepC M] (m : M) 
 Upwards semantics: both sep is weak and wand is strong
 -/
 @[simp]
-def Kripke.interp_upwards [Kripke.Structure M] [Kripke.Model M B] [SepC M] (m : M) (e : L B) : Prop :=
+def Kripke.interp_upwards [Kripke.Structure M] [Kripke.AtomicInterp M B] [SepC M] (m : M) (e : L B) : Prop :=
   match e with
   | L.base b   => Kripke.AtomicInterp.ainterp m b
   | L.bot      => False
@@ -197,7 +200,7 @@ def Kripke.interp_upwards [Kripke.Structure M] [Kripke.Model M B] [SepC M] (m : 
 Downwards semantics: sep is strong and wand is weak
 -/
 @[simp]
-def Kripke.interp_downwards [Kripke.Structure M] [Kripke.Model M B] [SepC M] (m : M) (e : L B) :  Prop :=
+def Kripke.interp_downwards [Kripke.Structure M] [Kripke.AtomicInterp M B] [SepC M] (m : M) (e : L B) :  Prop :=
   match e with
   | L.base b   => Kripke.AtomicInterp.ainterp m b
   | L.bot      => False
@@ -213,7 +216,7 @@ def Kripke.interp_downwards [Kripke.Structure M] [Kripke.Model M B] [SepC M] (m 
 Instances of the general interfaces for flat, upwards, and downwards semantics
 -/
 
-instance flat_semantics [Kripke.Structure M] [Kripke.Model M B] [SepC M] : Kripke.Semantics M B where
+instance flat_semantics [Kripke.Structure M] [Kripke.AtomicInterp M B] [SepC M] : Kripke.Semantics M B where
   interp := Kripke.interp_flat
   interp_base := by simp
   interp_bot  := by simp
@@ -221,13 +224,13 @@ instance flat_semantics [Kripke.Structure M] [Kripke.Model M B] [SepC M] : Kripk
   interp_or   := by simp
   interp_imp  := by simp
 
-instance flat_weak_wand [Kripke.Structure M] [Kripke.Model M B] [SepC M]  : Kripke.WeakWandSemantics M B flat_semantics where
+instance flat_weak_wand [Kripke.Structure M] [Kripke.AtomicInterp M B] [SepC M]  : Kripke.WeakWandSemantics M B flat_semantics where
   interp_wand := by simp [Kripke.Semantics.interp]
 
-instance flat_weak_sep [Kripke.Structure M] [Kripke.Model M B] [SepC M]  : Kripke.WeakSepSemantics M B flat_semantics where
+instance flat_weak_sep [Kripke.Structure M] [Kripke.AtomicInterp M B] [SepC M]  : Kripke.WeakSepSemantics M B flat_semantics where
   interp_sep := by simp [Kripke.Semantics.interp]
 
-instance upwards_semantics [Kripke.Structure M] [Kripke.Model M B] [SepC M] : Kripke.Semantics M B where
+instance upwards_semantics [Kripke.Structure M] [Kripke.AtomicInterp M B] [SepC M] : Kripke.Semantics M B where
   interp := Kripke.interp_upwards
   interp_base := by simp
   interp_bot  := by simp
@@ -235,13 +238,13 @@ instance upwards_semantics [Kripke.Structure M] [Kripke.Model M B] [SepC M] : Kr
   interp_or   := by simp
   interp_imp  := by simp
 
-instance upwards_strong_wand [Kripke.Structure M] [Kripke.Model M B] [SepC M]  : Kripke.StrongWandSemantics M B upwards_semantics where
+instance upwards_strong_wand [Kripke.Structure M] [Kripke.AtomicInterp M B] [SepC M]  : Kripke.StrongWandSemantics M B upwards_semantics where
   interp_wand := by simp [Kripke.Semantics.interp]
 
-instance upwards_weak_sep [Kripke.Structure M] [Kripke.Model M B] [SepC M]  : Kripke.WeakSepSemantics M B upwards_semantics where
+instance upwards_weak_sep [Kripke.Structure M] [Kripke.AtomicInterp M B] [SepC M]  : Kripke.WeakSepSemantics M B upwards_semantics where
   interp_sep := by simp [Kripke.Semantics.interp]
 
-instance downwards_semantics [Kripke.Structure M] [Kripke.Model M B] [SepC M] : Kripke.Semantics M B where
+instance downwards_semantics [Kripke.Structure M] [Kripke.AtomicInterp M B] [SepC M] : Kripke.Semantics M B where
   interp := Kripke.interp_downwards
   interp_base := by simp
   interp_bot  := by simp
@@ -249,10 +252,10 @@ instance downwards_semantics [Kripke.Structure M] [Kripke.Model M B] [SepC M] : 
   interp_or   := by simp
   interp_imp  := by simp
 
-instance downwards_weak_wand [Kripke.Structure M] [Kripke.Model M B] [SepC M]  : Kripke.WeakWandSemantics M B downwards_semantics where
+instance downwards_weak_wand [Kripke.Structure M] [Kripke.AtomicInterp M B] [SepC M] : Kripke.WeakWandSemantics M B downwards_semantics where
   interp_wand := by simp [Kripke.Semantics.interp]
 
-instance downwards_strong_sep [Kripke.Structure M] [Kripke.Model M B] [SepC M]  : Kripke.StrongSepSemantics M B downwards_semantics where
+instance downwards_strong_sep [Kripke.Structure M] [Kripke.AtomicInterp M B] [SepC M] : Kripke.StrongSepSemantics M B downwards_semantics where
   interp_sep := by simp [Kripke.Semantics.interp]
 
 /--
@@ -267,7 +270,7 @@ class UCSA (M : Type) [Kripke.Ord M] [SepC M] where
 class DCSA (M : Type) [Kripke.Ord M] [SepC M] where
   dcsa : ∀ m1 m2 m n1 n2, m1 ∗ m2 = m -> n1 << m1 -> n2 << m2 -> ∃(n : M), n1 ∗ n2 = n ∧ n << m
 
-theorem weak_sep_monotonicity [Kripke.Ord M] [SepC M] (S : Kripke.Semantics M B) [W : Kripke.WeakSepSemantics M B S] [UCSA M] :
+theorem Mono.weak_sep [Kripke.Ord M] [SepC M] (S : Kripke.Semantics M B) [W : Kripke.WeakSepSemantics M B S] [UCSA M] :
     Kripke.monotonic_denotation S e1 ->
     Kripke.monotonic_denotation S e2 ->
     Kripke.monotonic_denotation S (L.sep e1 e2) := by
@@ -283,7 +286,7 @@ theorem weak_sep_monotonicity [Kripke.Ord M] [SepC M] (S : Kripke.Semantics M B)
   · exact M1 n1 m1 H2 He1
   · exact M2 n2 m2 H3 He2
 
-theorem weak_wand_monotonicity [Kripke.Structure M] [SepC M] (S : Kripke.Semantics M B) [W : Kripke.WeakWandSemantics M B S] [DCSA M] :
+theorem Mono.weak_wand [Kripke.Structure M] [SepC M] (S : Kripke.Semantics M B) [W : Kripke.WeakWandSemantics M B S] [DCSA M] :
     -- Kripke.monotonic_denotation S e1 ->
     Kripke.monotonic_denotation S e2 ->
     Kripke.monotonic_denotation S (L.wand e1 e2) := by
@@ -297,7 +300,7 @@ theorem weak_wand_monotonicity [Kripke.Structure M] [SepC M] (S : Kripke.Semanti
   apply H
   apply He1
 
-theorem strong_sep_monotonicity [Kripke.Structure M] [SepC M] (S : Kripke.Semantics M B) [W : Kripke.StrongSepSemantics M B S] :
+theorem Mono.strong_sep [Kripke.Structure M] [SepC M] (S : Kripke.Semantics M B) [W : Kripke.StrongSepSemantics M B S] :
     -- Kripke.monotonic_denotation S e1 ->
     -- Kripke.monotonic_denotation S e2 ->
     Kripke.monotonic_denotation S (L.sep e1 e2) := by
@@ -310,7 +313,7 @@ theorem strong_sep_monotonicity [Kripke.Structure M] [SepC M] (S : Kripke.Semant
   exists x1
   exists x2
 
-theorem strong_wand_monotonicity [Kripke.Structure M] [SepC M] (S : Kripke.Semantics M B) [W : Kripke.StrongWandSemantics M B S] :
+theorem Mono.strong_wand [Kripke.Structure M] [SepC M] (S : Kripke.Semantics M B) [W : Kripke.StrongWandSemantics M B S] :
     -- Kripke.monotonic_denotation S e1 ->
     -- Kripke.monotonic_denotation S e2 ->
     Kripke.monotonic_denotation S (L.wand e1 e2) := by
@@ -320,3 +323,135 @@ theorem strong_wand_monotonicity [Kripke.Structure M] [SepC M] (S : Kripke.Seman
   apply H
   · exact Kripke.Structure.kle_trans n m m0 Hmn Hm0m1
   apply Hi1
+
+theorem Mono.base [Kripke.Structure M] (S : Kripke.Semantics M B) [Mod : Kripke.Model M B] :
+    Kripke.monotonic_denotation S (L.base b) := by
+  unfold Kripke.monotonic_denotation
+  intro m n Hnm
+  simp [Kripke.Semantics.interp_base]
+  intro H1
+  apply Mod.kle_ainterp_mono
+  · apply Hnm
+  · apply H1
+
+theorem Mono.bot [Kripke.Structure M] (S : Kripke.Semantics M B) :
+    Kripke.monotonic_denotation S L.bot := by
+  unfold Kripke.monotonic_denotation
+  simp [Kripke.Semantics.interp_bot]
+
+theorem Mono.and [Kripke.Structure M] (S : Kripke.Semantics M B) :
+    Kripke.monotonic_denotation S φ ->
+    Kripke.monotonic_denotation S ψ ->
+    Kripke.monotonic_denotation S (L.and φ ψ) := by
+  unfold Kripke.monotonic_denotation
+  simp [Kripke.Semantics.interp_and]
+  intro Hm1 Hm2 m n Hnm Hφ Hψ
+  apply And.intro
+  · apply (Hm1 _ _ Hnm)
+    trivial
+  · apply (Hm2 _ _ Hnm)
+    trivial
+
+theorem Mono.or [Kripke.Structure M] (S : Kripke.Semantics M B) :
+    Kripke.monotonic_denotation S φ ->
+    Kripke.monotonic_denotation S ψ ->
+    Kripke.monotonic_denotation S (L.or φ ψ) := by
+  unfold Kripke.monotonic_denotation
+  simp [Kripke.Semantics.interp_or]
+  intro Hm1 Hm2 m n Hnm H
+  cases H
+  · left
+    apply (Hm1 _ _ Hnm)
+    trivial
+  · right
+    apply (Hm2 _ _ Hnm)
+    trivial
+
+theorem Mono.imp [Kripke.Structure M] (S : Kripke.Semantics M B) :
+    Kripke.monotonic_denotation S (L.imp φ ψ) := by
+  unfold Kripke.monotonic_denotation
+  simp [Kripke.Semantics.interp_imp]
+  intro m n Hmn H m1 Hm1 H2
+  apply H
+  · exact Kripke.Structure.kle_trans n m m1 Hmn Hm1
+  trivial
+
+theorem Mono.emp [Kripke.Structure M] [SepC M] (S : Kripke.Semantics M B) [Kripke.EmpSemantics M B S] :
+    Kripke.monotonic_denotation S L.emp := by
+  unfold Kripke.monotonic_denotation
+  simp [Kripke.EmpSemantics.interp_emp]
+  intro m n Hnm
+  simp [is_increasing]
+  intro h1 m2
+  sorry
+
+
+
+-- TODO: Lemma 1: make conversion instances for StrongWand and WeakWand in a UCSA, resp. DCSA
+
+-- TODO: In upwards and downwards closed model, all programs in the flat semantics have monotonic denotation
+
+theorem Mono.strong_monotonicity
+    [SepC M] [Kripke.Structure M] (S : Kripke.Semantics M B)
+    [Kripke.Model M B] [Kripke.EmpSemantics M B S]
+    [Kripke.StrongWandSemantics M B S] [Kripke.StrongSepSemantics M B S] :
+    Kripke.monotonic_denotation S e := by
+  induction e
+  · apply Mono.base
+  · apply Mono.bot
+  · apply Mono.and <;> trivial
+  · apply Mono.or <;> trivial
+  · apply Mono.imp
+  · apply Mono.emp
+  · apply strong_sep
+  · apply strong_wand
+
+theorem Mono.ucsa_dcsa_weak_monotonicity
+    [SepC M] [Kripke.Structure M] (S : Kripke.Semantics M B)
+    [Kripke.Model M B] [Kripke.EmpSemantics M B S]
+    [Kripke.WeakWandSemantics M B S] [Kripke.WeakSepSemantics M B S]
+    [UCSA M] [DCSA M] :
+    Kripke.monotonic_denotation S e := by
+  induction e
+  · apply Mono.base
+  · apply Mono.bot
+  · apply Mono.and <;> trivial
+  · apply Mono.or <;> trivial
+  · apply Mono.imp
+  · apply Mono.emp
+  · apply weak_sep <;> trivial
+  · apply weak_wand <;> trivial
+
+class Mono.MonotoneSemantics (M B : Type) [Kripke.Ord M] (S : Kripke.Semantics M B) where
+  mono : ∀ e, Kripke.monotonic_denotation S e
+
+-- Instance of MonotoneSemantics for ...
+
+
+-- TODO: Semantic equivalence lemmas
+
+
+-- imp1 is valid in the Kripke semantics
+theorem Soundness.imp1 (R : L B -> Prop) [IP R] {φ ψ : L B} [Kripke.Ord M] (S : Kripke.Semantics M B) [Mono.MonotoneSemantics M B S] :
+    ∀ m : M, Kripke.Semantics.interp m (φ.imp (ψ.imp φ)) := by
+  intro m
+  rw [Kripke.Semantics.interp_imp]
+  intro m0 _ Hφ
+  rw [Kripke.Semantics.interp_imp]
+  intro m1 Hm1 _
+  apply Mono.MonotoneSemantics.mono
+  · apply Hm1
+  apply Hφ
+
+
+
+  -- mp ...
+ --  imp1  : R <| imp φ <| imp ψ φ
+ --  imp2  : R <| imp (imp φ (imp ψ χ)) <| imp (imp φ ψ) <| imp φ χ
+ --  andI  : R <| imp φ <| imp ψ (and φ ψ)
+ --  andE1 : R <| imp (and φ ψ) φ
+ --  andE2 : R <| imp (and φ ψ) ψ
+ --  orI1  : R <| imp φ (or φ ψ)
+ --  orI2  : R <| imp ψ (or φ ψ)
+ --  orE   : R <| imp (imp φ χ) <| imp (imp ψ χ) <| imp (or φ ψ) χ
+ --  botE  : R <| imp bot φ
