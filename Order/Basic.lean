@@ -529,16 +529,23 @@ theorem Soundness.orE (R : L B -> Prop) [IP R] {φ ψ : L B}
     · exact m2m3
     · trivial
 
-/-
-theorem Soundness.botE (R : L B -> Prop) [IP R] {φ ψ : L B} [Kripke.Ord M] (S : Kripke.Semantics M B) [SoundIPModel M] :
+theorem Soundness.botE (R : L B -> Prop) [IP R] {φ : L B}
+    [Kripke.Structure M] (S : Kripke.Semantics M B) [Kripke.Model M B] [SoundIPModel M] [WeakSemantics M B S] :
     ∀ m : M, Kripke.Semantics.interp m <| imp bot φ := by
-  sorry
+  simp [Kripke.Semantics.interp_imp, Kripke.Semantics.interp_bot]
 
--- Not sure about this one...
-theorem Soundness.mp (R : L B -> Prop) [IP R] {φ ψ : L B} [Kripke.Ord M] (S : Kripke.Semantics M B) [SoundIPModel M] :
+-- In this one, should m be the same in each? Or should it increase?
+theorem Soundness.mp (R : L B -> Prop) [IP R] {φ ψ : L B}
+    [Kripke.Structure M] (S : Kripke.Semantics M B) [Kripke.Model M B] [SoundIPModel M] [WeakSemantics M B S] :
     ∀ m : M, Kripke.Semantics.interp m φ -> Kripke.Semantics.interp m (imp φ ψ) -> Kripke.Semantics.interp m ψ := by
-  sorry
--/
+  simp [Kripke.Semantics.interp_imp]
+  intro m Hφ H
+  apply H
+  · exact Kripke.Structure.kle_refl m
+  · trivial
+
+
+
 
 /-
 Soundness for the extensions
