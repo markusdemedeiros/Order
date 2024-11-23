@@ -500,29 +500,36 @@ theorem Soundness.andE2 (R : L B -> Prop) [IP R] {φ ψ : L B}
     ∀ m : M, Kripke.Semantics.interp m <| imp (and φ ψ) ψ := by
   simp [Kripke.Semantics.interp_imp, Kripke.Semantics.interp_and]
 
+theorem Soundness.orI1 (R : L B -> Prop) [IP R] {φ ψ : L B}
+    [Kripke.Structure M] (S : Kripke.Semantics M B) [Kripke.Model M B] [SoundIPModel M] [WeakSemantics M B S] :
+    ∀ m : M, Kripke.Semantics.interp m <| imp φ (or φ ψ) := by
+  simp [Kripke.Semantics.interp_imp, Kripke.Semantics.interp_or]
+  intros
+  left
+  trivial
+
+theorem Soundness.orI2 (R : L B -> Prop) [IP R] {φ ψ : L B}
+    [Kripke.Structure M] (S : Kripke.Semantics M B) [Kripke.Model M B] [SoundIPModel M] [WeakSemantics M B S] :
+    ∀ m : M, Kripke.Semantics.interp m <| imp ψ (or φ ψ) := by
+  simp [Kripke.Semantics.interp_imp, Kripke.Semantics.interp_or]
+  intros
+  right
+  trivial
+
+theorem Soundness.orE (R : L B -> Prop) [IP R] {φ ψ : L B}
+    [Kripke.Structure M] (S : Kripke.Semantics M B) [Kripke.Model M B] [SoundIPModel M] [WeakSemantics M B S] :
+    ∀ m : M, Kripke.Semantics.interp m <| imp (imp φ χ) <| imp (imp ψ χ) <| imp (or φ ψ) χ := by
+  simp [Kripke.Semantics.interp_imp, Kripke.Semantics.interp_or]
+  intro m0 m1 _ H1 m2 m1m2 H2 m3 m2m3 H3
+  cases H3
+  · apply H1
+    · exact Kripke.Structure.kle_trans m1 m2 m3 m1m2 m2m3
+    · trivial
+  · apply H2
+    · exact m2m3
+    · trivial
 
 /-
-
-theorem Soundness.andE1 (R : L B -> Prop) [IP R] {φ ψ : L B} [Kripke.Ord M] (S : Kripke.Semantics M B) [SoundIPModel M] :
-    ∀ m : M, Kripke.Semantics.interp m <| imp (and φ ψ) φ := by
-  sorry
-
-theorem Soundness.andE2 (R : L B -> Prop) [IP R] {φ ψ : L B} [Kripke.Ord M] (S : Kripke.Semantics M B) [SoundIPModel M] :
-    ∀ m : M, Kripke.Semantics.interp m <| imp (and φ ψ) ψ := by
-  sorry
-
-theorem Soundness.orI1 (R : L B -> Prop) [IP R] {φ ψ : L B} [Kripke.Ord M] (S : Kripke.Semantics M B) [SoundIPModel M] :
-    ∀ m : M, Kripke.Semantics.interp m <| imp φ (or φ ψ) := by
-  sorry
-
-theorem Soundness.orI2 (R : L B -> Prop) [IP R] {φ ψ : L B} [Kripke.Ord M] (S : Kripke.Semantics M B) [SoundIPModel M] :
-    ∀ m : M, Kripke.Semantics.interp m <| imp ψ (or φ ψ) := by
-  sorry
-
-theorem Soundness.orE (R : L B -> Prop) [IP R] {φ ψ : L B} [Kripke.Ord M] (S : Kripke.Semantics M B) [SoundIPModel M] :
-    ∀ m : M, Kripke.Semantics.interp m <|  imp (imp φ χ) <| imp (imp ψ χ) <| imp (or φ ψ) χ := by
-  sorry
-
 theorem Soundness.botE (R : L B -> Prop) [IP R] {φ ψ : L B} [Kripke.Ord M] (S : Kripke.Semantics M B) [SoundIPModel M] :
     ∀ m : M, Kripke.Semantics.interp m <| imp bot φ := by
   sorry
