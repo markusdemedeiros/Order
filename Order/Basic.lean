@@ -562,21 +562,29 @@ Soundness for the SL axioms
 
 
 theorem Soundness.scomm (R : L B -> Prop) [IP R] {φ : L B}
-    [Kripke.Structure M] (S : Kripke.Semantics M B) [Kripke.Model M B] [SoundIPModel M] [StongSemantics M B S] :
+    [Kripke.Structure M] (S : Kripke.Semantics M B) [Kripke.Model M B] [SoundIPModel M] [StongSemantics M B S] [SA M] :
     ∀ m : M, S.interp m <| imp (sep φ ψ) (sep ψ φ) := by
   simp [Kripke.Semantics.interp_imp]
-  intro m0 m1 m0m1
+  intro m0 m1 _
   simp [Kripke.StrongSepSemantics.interp_sep]
   intro m2 m2m1 m3 m4 m3m4m2 Hφ Hψ
-  sorry
+  exists (m4 ∗ m3)
+  apply And.intro
+  · rw [SA.sepC_comm]
+    apply Kripke.Structure.kle_trans _ m2
+    · rw [<- m3m4m2]
+      apply Kripke.Structure.kle_refl
+    · trivial
+  exists m4
+  exists m3
 
 theorem Soundness.sA1 (R : L B -> Prop) [IP R] {φ : L B}
-    [Kripke.Structure M] (S : Kripke.Semantics M B) [Kripke.Model M B] [SoundIPModel M] [StongSemantics M B S] :
+    [Kripke.Structure M] (S : Kripke.Semantics M B) [Kripke.Model M B] [SoundIPModel M] [StongSemantics M B S] [SA M] :
     ∀ m : M, (S.interp m <| imp (sep φ ψ) χ) -> (S.interp m <| imp φ (wand ψ χ)) := by
   sorry
 
 theorem Soundness.sA2 (R : L B -> Prop) [IP R] {φ : L B}
-    [Kripke.Structure M] (S : Kripke.Semantics M B) [Kripke.Model M B] [SoundIPModel M] [StongSemantics M B S] :
+    [Kripke.Structure M] (S : Kripke.Semantics M B) [Kripke.Model M B] [SoundIPModel M] [StongSemantics M B S] [SA M] :
     ∀ m : M, (S.interp m <| imp φ (wand ψ χ)) -> (S.interp m <| imp (sep φ ψ) χ) := by
   sorry
 
@@ -606,7 +614,7 @@ theorem Soundness.semp (R : L B -> Prop) [IP R] {φ : L B}
     exists m1r
     exists m1u
     apply And.intro
-    · rw [<- SA.sepC_comm]
+    · rw [SA.sepC_comm]
       trivial
     apply And.intro
     · apply SoundIPModel.mono _ _ _ _ _ m1 ?G2 ?G3
@@ -615,7 +623,7 @@ theorem Soundness.semp (R : L B -> Prop) [IP R] {φ : L B}
     · trivial
 
 theorem Soundness.sassoc (R : L B -> Prop) [IP R] {φ : L B}
-    [Kripke.Structure M] (S : Kripke.Semantics M B) [Kripke.Model M B] [SoundIPModel M] [StongSemantics M B S] :
+    [Kripke.Structure M] (S : Kripke.Semantics M B) [Kripke.Model M B] [SoundIPModel M] [StongSemantics M B S] [SA M] :
     ∀ m : M, S.interp m <| imp (sep (sep φ ψ) χ) <| (sep φ (sep ψ χ)) := by
   simp [Kripke.Semantics.interp_imp, Kripke.StrongSepSemantics.interp_sep]
   intros m0 m1 m0m1 m2 m2m1 m3 m4 m342 m5 m5m3 m6 m7 m675 Hφ Hψ Hχ
@@ -634,7 +642,7 @@ theorem Soundness.sassoc (R : L B -> Prop) [IP R] {φ : L B}
   sorry
 
 theorem Soundness.smono (R : L B -> Prop) [IP R] {φ : L B}
-    [Kripke.Structure M] (S : Kripke.Semantics M B) [Kripke.Model M B] [SoundIPModel M] [StongSemantics M B S] :
+    [Kripke.Structure M] (S : Kripke.Semantics M B) [Kripke.Model M B] [SoundIPModel M] [StongSemantics M B S] [SA M] :
     ∀ m : M, (S.interp m <| imp φ1 ψ1) -> (S.interp m <| imp φ2 ψ2) -> (S.interp m <| imp (sep φ1 φ2) (sep ψ1 ψ2)) := by
   sorry
 
