@@ -480,8 +480,15 @@ theorem Soundness.imp2 (R : L B -> Prop) [IP R] {φ ψ : L B}
 
 theorem Soundness.andI (R : L B -> Prop) [IP R] {φ ψ : L B}
     [Kripke.Structure M] (S : Kripke.Semantics M B) [Kripke.Model M B] [SoundIPModel M] [WeakSemantics M B S] :
-    ∀ m : M, Kripke.Semantics.interp m  <| imp φ <| imp ψ (and φ ψ) := by
-  sorry
+    ∀ m : M, Kripke.Semantics.interp m <| imp φ <| imp ψ (and φ ψ) := by
+  simp [Kripke.Semantics.interp_imp, Kripke.Semantics.interp_and]
+  intro m0 m1 _ Hφ m3 Hm1m3 Hψ
+  apply And.intro
+  · apply SoundIPModel.mono _ _ _ _ _ _ Hm1m3
+    trivial
+  · trivial
+
+
 
 /-
 
