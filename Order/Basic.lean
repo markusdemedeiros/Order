@@ -577,33 +577,18 @@ theorem Soundness.scomm (R : L B -> Prop) [IP R] {φ : L B}
 
 theorem Soundness.sA1 (R : L B -> Prop) [IP R] {φ : L B}
     [Kripke.Structure M] (S : Kripke.Semantics M B) [Kripke.Model M B] [SoundIPModel M] [FlatSemantics M B S] [SA M] :
-    ∀ m : M, (S.interp m <| imp (sep φ ψ) χ) -> (S.interp m <| imp φ (wand ψ χ)) := by
+    (∀ m : M, (S.interp m <| imp (sep φ ψ) χ)) -> (∀ m : M, (S.interp m <| imp φ (wand ψ χ))) := by
   simp [Kripke.Semantics.interp_imp, Kripke.WeakSepSemantics.interp_sep, Kripke.WeakWandSemantics.interp_wand]
-  intro m0 H m1 m0m1 Hφ m2 Hψ
-  -- apply (H (m1 ∗ m2) ?G1 m1 m2 (by rfl) Hφ Hψ)
-  -- Not sure if this is right
-  -- Unitality?
-  have U := Unital.unital (m1 ∗ m2)
-  simp [residue] at U
-
-  -- Downwards closure?
-  sorry
-
-  -- intro m1 H m2 m1m2 Hφ m3 m4 m2m3 Hψ
-  -- have H' := H (m3 ∗ m4)
-  -- rcases (Unital.unital (m3 ∗ m4)) with ⟨ m1u, ⟨ m1r, Em1, Hm1r ⟩, Hu ⟩
-  -- have H' := H (m3 ∗ m4)
-  -- ?G1 m1 -- ?G1 m2 m4 ?G2 Hφ Hψ
-  -- case G1 => exact Kripke.Structure.kle_trans m1 m2 m3 m1m2 m2m3
+  intro H m1 m2 _ Hφ m3 Hψ
+  apply H (m2 ∗ m3) (m2 ∗ m3) (Kripke.Structure.kle_refl (m2 ∗ m3)) m2 m3 (by rfl) Hφ Hψ
 
 theorem Soundness.sA2 (R : L B -> Prop) [IP R] {φ : L B}
     [Kripke.Structure M] (S : Kripke.Semantics M B) [Kripke.Model M B] [SoundIPModel M] [FlatSemantics M B S] [SA M] :
-    ∀ m : M, (S.interp m <| imp φ (wand ψ χ)) -> (S.interp m <| imp (sep φ ψ) χ) := by
+    (∀ m : M, (S.interp m <| imp φ (wand ψ χ))) -> (∀ m : M, S.interp m <| imp (sep φ ψ) χ) := by
   simp [Kripke.Semantics.interp_imp, Kripke.WeakSepSemantics.interp_sep, Kripke.WeakWandSemantics.interp_wand]
-  intro m0 H m1 m0m1 m2 m3 m2m3 Hφ Hψ
-  have H' := H
-  -- Probably need unitality or closure of some kind here?
-  sorry
+  intro H m1 m2 m0m1 m3 m4 m3m42 Hφ Hψ
+  subst m3m42
+  apply H m3 m3 (Kripke.Structure.kle_refl m3) Hφ m4 Hψ
 
 theorem Soundness.semp (R : L B -> Prop) [IP R] {φ : L B}
     [Kripke.Structure M] (S : Kripke.Semantics M B) [Kripke.Model M B] [SoundIPModel M] [FlatSemantics M B S] [SA M] :
@@ -646,11 +631,19 @@ theorem Soundness.sassoc (R : L B -> Prop) [IP R] {φ : L B}
   exists m5
   exists m3
 
-theorem Soundness.smono (R : L B -> Prop) [IP R] {φ : L B}
+theorem Soundness.smono (R : L B -> Prop) [IP R]
     [Kripke.Structure M] (S : Kripke.Semantics M B) [Kripke.Model M B] [SoundIPModel M] [FlatSemantics M B S] [SA M] :
-    ∀ m : M, (S.interp m <| imp φ1 ψ1) -> (S.interp m <| imp φ2 ψ2) -> (S.interp m <| imp (sep φ1 φ2) (sep ψ1 ψ2)) := by
-  sorry
-
+    (∀ m : M, (S.interp m <| imp φ1 ψ1)) -> (∀ m : M, S.interp m <| imp φ2 ψ2) -> (∀ m : M, S.interp m <| imp (sep φ1 φ2) (sep ψ1 ψ2)) := by
+  simp [Kripke.Semantics.interp_imp, Kripke.WeakSepSemantics.interp_sep]
+  intro H1 H2 m0 m1 m01 m2 m3 m231 Hp1 Hp2
+  subst m231
+  exists m2
+  exists m3
+  apply And.intro
+  · rfl
+  apply And.intro
+  · apply H1 m2 m2 (Kripke.Structure.kle_refl m2) Hp1
+  · apply H2 m3 m3 (Kripke.Structure.kle_refl m3) Hp2
 
 /-
 Soundness for the extensions
