@@ -414,6 +414,7 @@ class Unital (M : Type) [Kripke.Ord M] [SepC M] where
 Soundness of IP rules against in a model that is upwards closed, downwards closed, and unital
 -/
 
+-- FIXME: Changed to packed class
 class SoundIPModel (M : Type) [Kripke.Ord M] where
   inst_sepC : SepC M
   inst_SA : SA M
@@ -648,3 +649,164 @@ theorem Soundness.smono (R : L B -> Prop) [IP R]
 /-
 Soundness for the extensions
 -/
+
+
+
+/-
+Soundness for the basic IP+SL system (removed base props)
+-/
+
+inductive IPSL_deriv {B : Type} : L B -> Prop
+| mp     : IPSL_deriv φ -> IPSL_deriv (imp φ ψ) -> IPSL_deriv ψ
+| imp1   : IPSL_deriv <| imp φ <| imp ψ φ
+| imp2   : IPSL_deriv <| imp (imp φ (imp ψ χ)) <| imp (imp φ ψ) <| imp φ χ
+| andI   : IPSL_deriv <| imp φ <| imp ψ (and φ ψ)
+| andE1  : IPSL_deriv <| imp (and φ ψ) φ
+| andE2  : IPSL_deriv <| imp (and φ ψ) ψ
+| orI1   : IPSL_deriv <| imp φ (or φ ψ)
+| orI2   : IPSL_deriv <| imp ψ (or φ ψ)
+| orE    : IPSL_deriv <| imp (imp φ χ) <| imp (imp ψ χ) <| imp (or φ ψ) χ
+| botE   : IPSL_deriv <| imp bot φ
+| scomm  : IPSL_deriv <| imp (sep φ ψ) (sep ψ φ)
+| sA1    : IPSL_deriv (imp (sep φ ψ) χ) -> IPSL_deriv (imp φ (wand ψ χ))
+| sA2    : IPSL_deriv (imp φ (wand ψ χ)) -> IPSL_deriv (imp (sep φ ψ) χ)
+| semp   : IPSL_deriv (iff (sep φ emp) φ)
+| sassoc : IPSL_deriv (imp (sep (sep φ ψ) χ) <| (sep φ (sep ψ χ)))
+| smono  : IPSL_deriv (imp φ1 ψ1) -> IPSL_deriv (imp φ2 ψ2) -> IPSL_deriv (imp (sep φ1 φ2) (sep ψ1 ψ2))
+
+instance ISPL_deriv_IP_inst {B} : IP (@IPSL_deriv B) where
+mp     := IPSL_deriv.mp
+imp1   := IPSL_deriv.imp1
+imp2   := IPSL_deriv.imp2
+andI   := IPSL_deriv.andI
+andE1  := IPSL_deriv.andE1
+andE2  := IPSL_deriv.andE2
+orI1   := IPSL_deriv.orI1
+orI2   := IPSL_deriv.orI2
+orE    := IPSL_deriv.orE
+botE   := IPSL_deriv.botE
+
+instance ISPL_deriv_SL_inst {B} : SL (@IPSL_deriv B) where
+scomm  := IPSL_deriv.scomm
+sA1    := IPSL_deriv.sA1
+sA2    := IPSL_deriv.sA2
+semp   := IPSL_deriv.semp
+sassoc := IPSL_deriv.sassoc
+smono  := IPSL_deriv.smono
+
+
+-- FIXME: typeclasses and implicits
+
+theorem IPSL_kripke_soundness {B : Type} [Kripke.Structure M] (S : Kripke.Semantics M B) [Kripke.Model M B] [SoundIPModel M] [FlatSemantics M B S] :
+    ∀ φ : L B, IPSL_deriv φ -> ∀ m, S.interp m φ := by
+  intro φ H
+  induction H
+  · rename_i p1 p2 _ _ IH1 IH2
+    intro m
+    apply (@Soundness.mp B M IPSL_deriv _ p1 p2 _ _ _ _ _ m)
+    · apply IH1
+    · apply IH2
+  · rename_i p1 p2
+    apply (@Soundness.imp1 B M IPSL_deriv _ p1 p2)
+  · rename_i p1 p2 p3
+    apply (@Soundness.imp2 B M p3 IPSL_deriv _ p1 p2)
+  · rename_i p1 p2
+    apply (@Soundness.andI B M IPSL_deriv _ p1 p2)
+  · rename_i p1 p2
+    apply (@Soundness.andE1 B M IPSL_deriv _ p1 p2)
+  · rename_i p1 p2
+    apply (@Soundness.andE2 B M IPSL_deriv _ p1 p2)
+  · rename_i p1 p2
+    apply (@Soundness.orI1 B M IPSL_deriv _ p1 p2)
+  · rename_i p1 p2
+    apply (@Soundness.orI2 B M IPSL_deriv _ p2 p1)
+  · rename_i p1 p2 p3
+    apply (@Soundness.orE B M p2 IPSL_deriv _ p1 p3)
+  · rename_i p1
+    apply (@Soundness.botE B M IPSL_deriv _ p1)
+  · rename_i p1 p2
+    apply (@Soundness.scomm B M p2 IPSL_deriv _ p1)
+  · rename_i p1 p2 p3 _ IH
+    apply (@Soundness.sA1 B M p2 p3 IPSL_deriv _ p1)
+    apply IH
+  · rename_i p1 p2 p3 _ IH
+    apply (@Soundness.sA2 B M p2 p3 IPSL_deriv _ p1)
+    apply IH
+  · rename_i p1
+    apply (@Soundness.semp B M IPSL_deriv _)
+  · rename_i p1 p2 p3
+    apply (@Soundness.sassoc B M p2 p3 IPSL_deriv _ p1 _ _ _ _ _ _ )
+  · rename_i p1 p2 p3 p4 _ _ IH1 IH2
+    apply (@Soundness.smono B M p1 p2 p3 p4 IPSL_deriv)
+    · apply IH1
+    · apply IH2
+
+
+
+section sound_model
+
+-- Now if we can exhibit _some_ Kripke model with the above requirements, to prove the IPSL system is sound
+
+instance discrete_order {T : Type} : Kripke.Ord T where
+  kle := Eq
+
+instance discrete_structure {T : Type} : Kripke.Structure T where
+  kle_refl _ := by rfl
+  kle_trans := by
+    unfold Kripke.Ord.kle
+    unfold discrete_order
+    simp
+
+instance discrete_triv_ainterp {T1 T2: Type} : Kripke.AtomicInterp T1 T2 where
+  ainterp _ _ := True
+
+instance sepC_unit : SepC Unit where
+  sepC _ _ := PUnit.unit
+
+-- #check
+instance discrete_model {T : Type} : Kripke.Model T Unit  where
+  kle_ainterp_mono _ _ _ H _ := by rw [<- H]; trivial
+
+instance unit_SA : SA Unit where
+  sepC_assoc := by simp
+  sepC_comm  := by simp
+
+instance unit_UCSA : UCSA Unit where
+  ucsa := by simp [Kripke.Ord.kle]
+
+instance unit_DCSA : DCSA Unit where
+  dcsa := by simp [Kripke.Ord.kle]
+
+instance unit_Unital : Unital Unit where
+  unital := by simp [residue, is_increasing, Kripke.Ord.kle]
+
+instance unit_SoundIPModel : SoundIPModel Unit where
+  inst_sepC := sepC_unit
+  inst_SA := unit_SA
+  inst_ucsa := unit_UCSA
+  inst_dcsa := unit_DCSA
+  inst_unital := unit_Unital
+
+
+def UnitSemantics : Kripke.Semantics Unit Unit := (@flat_semantics Unit Unit _ _ _)
+
+instance unit_empSemantics : Kripke.EmpSemantics Unit Unit UnitSemantics where
+  interp_emp := by simp [Kripke.Semantics.interp, UnitSemantics, flat_semantics]
+
+instance unit_weakWand : Kripke.WeakWandSemantics Unit Unit UnitSemantics where
+  interp_wand := by simp [Kripke.Semantics.interp, UnitSemantics, flat_semantics]
+
+instance unit_weakSep : Kripke.WeakSepSemantics Unit Unit UnitSemantics where
+  interp_sep := by simp [Kripke.Semantics.interp, UnitSemantics, flat_semantics]
+
+instance unit_flatSemantics : FlatSemantics Unit _ UnitSemantics where
+  inst_EmpSemantics := unit_empSemantics
+  inst_WeakWandSemantics := unit_weakWand
+  inst_WeakSepSemantics := unit_weakSep
+
+theorem IPSL_unit_soundness : @IPSL_deriv Unit bot -> False := by
+  intro K
+  have X := @IPSL_kripke_soundness Unit Unit _ UnitSemantics discrete_model unit_SoundIPModel _ bot K PUnit.unit
+  simp [Kripke.Semantics.interp, UnitSemantics, flat_semantics] at X
+
+end sound_model
