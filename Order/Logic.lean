@@ -692,19 +692,18 @@ end IPSL_triv_model
 
 
 
+section alt_semantics
 
-
-
-/-
-
+variable (M B : Type)
+variable [Kripke.Ord M] [Kripke.Structure M] [SepC M] [Mod : Kripke.Model M B]
 
 /--
 Upwards semantics: both sep is weak and wand is strong
 -/
 @[simp]
-def Kripke.interp_upwards [Kripke.Structure M] [Kripke.AtomicInterp M B] [SepC M] (m : M) (e : L B) : Prop :=
+def Kripke.interp_upwards (m : M) (e : L B) : Prop :=
   match e with
-  | L.base b   => Kripke.AtomicInterp.ainterp m b
+  | L.base b   => Mod.ainterp m b
   | L.bot      => False
   | L.and l r  => interp_upwards m l ∧ interp_upwards m r
   | L.or l r   => interp_upwards m l ∨ interp_upwards m r
@@ -713,13 +712,34 @@ def Kripke.interp_upwards [Kripke.Structure M] [Kripke.AtomicInterp M B] [SepC M
   | L.sep l r  => ∃ m1 m2 : M, m1 ∗ m2 = m ∧ interp_upwards m1 l ∧ interp_upwards m2 r
   | L.wand l r => ∀ m0 m1 m2 : M, m << m0 -> m0 ∗ m1 = m2 -> interp_upwards m1 l -> interp_upwards m2 r
 
+
+instance upwards_semantics : Kripke.Semantics M B where
+  interp := Kripke.interp_upwards _ _
+
+instance upwards_base : Kripke.BaseSemantics M B (upwards_semantics M B) where
+  interp_base := by simp [Kripke.Semantics.interp]
+  interp_bot  := by simp [Kripke.Semantics.interp]
+  interp_and  := by simp [Kripke.Semantics.interp]
+  interp_or   := by simp [Kripke.Semantics.interp]
+  interp_imp  := by simp [Kripke.Semantics.interp]
+
+instance upwards_strong_wand : Kripke.StrongWandSemantics M B (upwards_semantics M B) where
+  interp_wand := by simp [Kripke.Semantics.interp]
+
+instance upwards_weak_sep : Kripke.WeakSepSemantics M B (upwards_semantics M B) where
+  interp_sep  := by simp [Kripke.Semantics.interp]
+
+instance upwards_emp : Kripke.EmpSemantics M B (flat_semantics M B) where
+  interp_emp  := by simp [Kripke.Semantics.interp]
+
+
 /--
 Downwards semantics: sep is strong and wand is weak
 -/
 @[simp]
-def Kripke.interp_downwards [Kripke.Structure M] [Kripke.AtomicInterp M B] [SepC M] (m : M) (e : L B) :  Prop :=
+def Kripke.interp_downwards (m : M) (e : L B) : Prop :=
   match e with
-  | L.base b   => Kripke.AtomicInterp.ainterp m b
+  | L.base b   => Mod.ainterp m b
   | L.bot      => False
   | L.and l r  => interp_downwards m l ∧ interp_downwards m r
   | L.or l r   => interp_downwards m l ∨ interp_downwards m r
@@ -728,28 +748,26 @@ def Kripke.interp_downwards [Kripke.Structure M] [Kripke.AtomicInterp M B] [SepC
   | L.sep l r  =>  ∃ m0 m1 m2 : M, m0 << m ∧ m1 ∗ m2 = m0 ∧ interp_downwards m1 l ∧ interp_downwards m2 r
   | L.wand l r => ∀ m1 m2 : M, m ∗ m1 = m2 -> interp_downwards m1 l -> interp_downwards m2 r
 
-instance upwards_strong_wand [Kripke.Structure M] [Kripke.AtomicInterp M B] [SepC M]  : Kripke.StrongWandSemantics M B upwards_semantics where
+
+instance downwards_semantics : Kripke.Semantics M B where
+  interp := Kripke.interp_downwards _ _
+
+instance downwards_base : Kripke.BaseSemantics M B (downwards_semantics M B) where
+  interp_base := by simp [Kripke.Semantics.interp]
+  interp_bot  := by simp [Kripke.Semantics.interp]
+  interp_and  := by simp [Kripke.Semantics.interp]
+  interp_or   := by simp [Kripke.Semantics.interp]
+  interp_imp  := by simp [Kripke.Semantics.interp]
+
+instance downwards_strong_wand : Kripke.WeakWandSemantics M B (downwards_semantics M B) where
   interp_wand := by simp [Kripke.Semantics.interp]
 
-instance upwards_weak_sep [Kripke.Structure M] [Kripke.AtomicInterp M B] [SepC M]  : Kripke.WeakSepSemantics M B upwards_semantics where
-  interp_sep := by simp [Kripke.Semantics.interp]
+instance downwards_weak_sep : Kripke.StrongSepSemantics M B (downwards_semantics M B) where
+  interp_sep  := by simp [Kripke.Semantics.interp]
 
-instance downwards_semantics [Kripke.Structure M] [Kripke.AtomicInterp M B] [SepC M] : Kripke.Semantics M B where
-  interp := Kripke.interp_downwards
-  interp_base := by simp
-  interp_bot  := by simp
-  interp_and  := by simp
-  interp_or   := by simp
-  interp_imp  := by simp
+instance downwards_emp : Kripke.EmpSemantics M B (downwards_semantics M B) where
+  interp_emp  := by simp [Kripke.Semantics.interp]
 
-instance downwards_weak_wand [Kripke.Structure M] [Kripke.AtomicInterp M B] [SepC M] : Kripke.WeakWandSemantics M B downwards_semantics where
-  interp_wand := by simp [Kripke.Semantics.interp]
-
-instance downwards_strong_sep [Kripke.Structure M] [Kripke.AtomicInterp M B] [SepC M] : Kripke.StrongSepSemantics M B downwards_semantics where
-  interp_sep := by simp [Kripke.Semantics.interp]
-
-
--/
 
 /-
 -- TODO: Lemma 1: make conversion instances for StrongWand and WeakWand in a UCSA, resp. DCSA
@@ -759,24 +777,3 @@ instance downwards_strong_sep [Kripke.Structure M] [Kripke.AtomicInterp M B] [Se
 -- TODO: Semantic equivalence lemmas
 -/
 
-/-
-instance ISPL_deriv_IP_inst {B} : IP (@IPSL_deriv B) where
-mp     := IPSL_deriv.mp
-imp1   := IPSL_deriv.imp1
-imp2   := IPSL_deriv.imp2
-andI   := IPSL_deriv.andI
-andE1  := IPSL_deriv.andE1
-andE2  := IPSL_deriv.andE2
-orI1   := IPSL_deriv.orI1
-orI2   := IPSL_deriv.orI2
-orE    := IPSL_deriv.orE
-botE   := IPSL_deriv.botE
-
-instance ISPL_deriv_SL_inst {B} : SL (@IPSL_deriv B) where
-scomm  := IPSL_deriv.scomm
-sA1    := IPSL_deriv.sA1
-sA2    := IPSL_deriv.sA2
-semp   := IPSL_deriv.semp
-sassoc := IPSL_deriv.sassoc
-smono  := IPSL_deriv.smono
--/

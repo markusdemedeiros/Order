@@ -69,3 +69,27 @@ def or_sep_iff [IP R] [SL R] : R <| iff (sep (or ϕ ψ) χ) (or (sep ϕ ψ) (sep
 
 def and_sep_iff [IP R] [SL R] : R <| iff (sep (and ϕ ψ) χ) (and (sep ϕ ψ) (sep ϕ χ)) := sorry
 -/
+
+
+/-
+Instances
+-/
+instance ISPL_deriv_IP_inst {B} : IP (@IPSL_deriv B) where
+mp     := IPSL_deriv.mp
+imp1   := IPSL_deriv.imp1
+imp2   := IPSL_deriv.imp2
+andI   := IPSL_deriv.andI
+andE1  := IPSL_deriv.andE1
+andE2  := IPSL_deriv.andE2
+orI1   := IPSL_deriv.orI1
+orI2   := IPSL_deriv.orI2
+orE    := IPSL_deriv.orE
+botE   := IPSL_deriv.botE
+
+instance ISPL_deriv_SL_inst {B} : SL (@IPSL_deriv B) where
+scomm  := IPSL_deriv.scomm
+sA1    := IPSL_deriv.sA1
+sA2    := IPSL_deriv.sA2
+semp   := IPSL_deriv.semp
+sassoc := IPSL_deriv.sassoc
+smono  := IPSL_deriv.smono
