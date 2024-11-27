@@ -36,13 +36,12 @@ open L
 
 /-- A type equipped with separating conjunction -/
 class SepC (M : Type) where
-  sepC : M -> M -> M
+  sepC : M -> M -> M -> Prop
 
-infixl:65 " ∗ " => SepC.sepC
+-- infixl:65 " ∗ " => SepC.sepC
 
 /-- A sepration algebra over M -/
-class SeparationAlgebra (M : Type) [S : SepC M] extends (Std.Associative S.sepC), (Std.Commutative S.sepC)
-
+class SeparationAlgebra (M : Type) [S : SepC M] extends (Associative S.sepC), (Commutative S.sepC)
 
 
 /-
@@ -60,7 +59,7 @@ infixl:65 " << " => Kripke.Ord.kle
 
 /-- An element is increasing -/
 def Kripke.is_increasing [Ord M] [SepC M] (e : M) : Prop :=
-  ∀ m n : M, e ∗ m = n -> m << n
+  ∀ m n : M, (SepC.sepC e m n) -> m << n
 
 /-- A type equipped with a reflexive, transitive order -/
 class Kripke.Structure (M : Type) [O : Ord M] extends (Reflexive O.kle), (Transitive O.kle)
@@ -68,9 +67,6 @@ class Kripke.Structure (M : Type) [O : Ord M] extends (Reflexive O.kle), (Transi
 /-- A Kripke model is a Kripke structure where atomic propositions have monotnic denotation -/
 class Kripke.Model (M B : Type) [Ord M] [Structure M] extends AtomicInterp M B where
   kle_ainterp_mono : ∀ m n σ, m << n -> ainterp m σ -> ainterp n σ
-
-
-
 
 
 
@@ -94,19 +90,19 @@ class Kripke.BaseSemantics (M B : Type) [Ord M] [Structure M] (S : Semantics M B
 
 /-- A Kripke semantics obeys the strong wand interpretation -/
 class Kripke.StrongWandSemantics (M B : Type) [Ord M] [SepC M] [Structure M] (S : Semantics M B) where
-  interp_wand : S.interp m (L.wand l r) = ∀ m0 m1 m2 : M, m << m0 -> m0 ∗ m1 = m2 -> S.interp m1 l -> S.interp m2 r
+  interp_wand : S.interp m (L.wand l r) = ∀ m0 m1 m2 : M, m << m0 -> (SepC.sepC m0 m1 m2) -> S.interp m1 l -> S.interp m2 r
 
 /-- A Kripke semantics obeys the strong separating conjunction interpretation -/
 class Kripke.StrongSepSemantics (M B : Type) [Ord M] [SepC M] [Structure M] (S : Semantics M B) where
-  interp_sep : S.interp m (L.sep l r) = ∃ m0 m1 m2 : M, m0 << m ∧ m1 ∗ m2 = m0 ∧ S.interp m1 l ∧ S.interp m2 r
+  interp_sep : S.interp m (L.sep l r) = ∃ m0 m1 m2 : M, m0 << m ∧ (SepC.sepC m1 m2 m0) ∧ S.interp m1 l ∧ S.interp m2 r
 
 /-- A Kripke semantics obeys the strong weak wand interpretation -/
 class Kripke.WeakWandSemantics (M B : Type) [Ord M] [SepC M] [Structure M] (S : Semantics M B) where
-  interp_wand : S.interp m (L.wand l r) = ∀ m1 m2 : M, m ∗ m1 = m2 -> S.interp m1 l -> S.interp m2 r
+  interp_wand : S.interp m (L.wand l r) = ∀ m1 m2 : M, (SepC.sepC m m1 m2) -> S.interp m1 l -> S.interp m2 r
 
 /-- A Kripke semantics obeys the strong weak separating conjunction interpretation -/
 class Kripke.WeakSepSemantics (M B : Type) [Ord M] [SepC M] [Structure M] (S : Semantics M B) where
-  interp_sep : S.interp m (L.sep l r) = ∃ m1 m2 : M, m1 ∗ m2 = m ∧ S.interp m1 l ∧ S.interp m2 r
+  interp_sep : S.interp m (L.sep l r) = ∃ m1 m2 : M, (SepC.sepC m1 m2 m) ∧ S.interp m1 l ∧ S.interp m2 r
 
 /-- A Kripke semantics obeys the interpretation of emp -/
 class Kripke.EmpSemantics (M B : Type) [Ord M] [SepC M] [Structure M] (S : Semantics M B) where
@@ -130,16 +126,15 @@ class Kripke.FlatSemantics (M B : Type) [Ord M] [SepC M] [Structure M] (S : Sema
 
 /-- A separation algebra is upwards closed -/
 class UCSA (M : Type) [Kripke.Ord M] [SepC M] where
-  ucsa : ∀ {m1 m2 m n}, m1 ∗ m2 = m -> m << n -> ∃ (n1 n2 : M), n1 ∗ n2 = n ∧ m1 << n1 ∧ m2 << n2
+  ucsa : ∀ {m1 m2 m n}, (SepC.sepC m1 m2 m) -> m << n -> ∃ (n1 n2 : M), (SepC.sepC n1 n2 n) ∧ m1 << n1 ∧ m2 << n2
 
 /-- A separation algebra is downwards closed -/
 class DCSA (M : Type) [Kripke.Ord M] [SepC M] where
-  dcsa : ∀ {m1 m2 m n1 n2}, m1 ∗ m2 = m -> n1 << m1 -> n2 << m2 -> ∃(n : M), n1 ∗ n2 = n ∧ n << m
-
+  dcsa : ∀ {m1 m2 m n1 n2}, (SepC.sepC m1 m2 m) -> n1 << m1 -> n2 << m2 -> ∃(n : M), (SepC.sepC n1 n2 n) ∧ n << m
 
 /-- m is a residue of n -/
 def residue [Kripke.Ord M] [SepC M] (m n : M) : Prop :=
-  ∃ n', m ∗ n' = n ∧ n << n'
+  ∃ n', (SepC.sepC m n' n) ∧ n << n'
 
 /-- All elements have an increasing residue -/
 class Unital (M : Type) [Kripke.Ord M] [SepC M] where
@@ -152,10 +147,6 @@ class BaseAlgebra (M : Type) [Kripke.Ord M] [SepC M] extends
   UCSA M,
   DCSA M,
   Unital M
-
-
-
-
 
 
 
@@ -191,6 +182,8 @@ theorem Mono.weak_sep [W : Kripke.WeakSepSemantics M B S] [UCSA M] :
   · apply M1 H2 He1
   · apply M2 H3 He2
 
+
+
 /--
 Weak wand preserves monotonic denotation in a DCSA
 
@@ -203,11 +196,12 @@ theorem Mono.weak_wand [W : Kripke.WeakWandSemantics M B S] [DCSA M] :
   simp [W.interp_wand]
   intro H2 m n Hmn H m1 He1
   have Hm1 : m1 << m1 := by apply Reflexive.refl
-  rcases (@DCSA.dcsa _ _ _ _ m m1 (m ∗ m1) n m1 (by rfl) Hmn Hm1) with ⟨ n', Hn', Hn'mm1 ⟩
-  apply (H2 Hn'mm1)
-  rw [<- Hn']
-  apply H
-  apply He1
+  sorry
+  -- rcases (@DCSA.dcsa _ _ _ _ m m1 (m ∗ m1) n m1 (by rfl) Hmn Hm1) with ⟨ n', Hn', Hn'mm1 ⟩
+  -- apply (H2 Hn'mm1)
+  -- rw [<- Hn']
+  -- apply H
+  -- apply He1
 
 
 /-- Strong conjunction has monotonic denotation -/
@@ -230,8 +224,8 @@ theorem Mono.strong_wand [W : Kripke.StrongWandSemantics M B S] :
   simp [W.interp_wand]
   intro H m0 m1 Hm0m1 Hi1
   apply H
-  · apply Transitive.trans Hmn Hm0m1
-  apply Hi1
+  apply Transitive.trans Hmn Hi1
+
 
 /-- Base semantics have monotonic denoatation -/
 theorem Mono.base [Kripke.BaseSemantics M B S] :
@@ -299,12 +293,16 @@ theorem Mono.emp_dcsa [Kripke.EmpSemantics M B S] [DCSA M] :
   simp [Kripke.EmpSemantics.interp_emp]
   intro m n Hnm
   simp [Kripke.is_increasing]
-  intro h1 m2
-  rcases (DCSA.dcsa (by rfl) Hnm Reflexive.refl) with ⟨ n', Hn', H'n' ⟩
-  apply Transitive.trans _ H'n'
-  rw [<- Hn']
-  apply h1
+  intro h1 m2 mm2 HS
 
+  /-
+  apply Transitive.trans ?G1 ?G2
+  rcases (DCSA.dcsa ?G1 Hnm Reflexive.refl) with ⟨ n', Hn', H'n' ⟩
+  sorry
+  -- rw [<- Hn']
+  -- apply h1
+  -/
+  sorry
 
 /--
 Monotonicity of the flat semantics in a base model (Base algebra with flat semantics )
@@ -327,7 +325,6 @@ end Mono
 
 
 
-
 /-
 ## Soudness for the base model
 -/
@@ -339,10 +336,6 @@ variable [Kripke.Ord M] [Kripke.Structure M] [SepC M]
 variable (S : Kripke.Semantics M B)
 variable [BaseAlgebra M]
 variable [Kripke.FlatSemantics M B S]
-
--- FIXME: What are the right typeclass hints to get this automatically?
-def comm := @Std.Commutative.comm M SepC.sepC _
-def assoc := @Std.Associative.assoc M SepC.sepC _
 
 theorem Soundness.imp1 {φ ψ : L B} :
     ∀ m : M, S.interp m <| imp φ <| imp ψ φ := by
@@ -439,26 +432,27 @@ theorem Soundness.scomm {φ : L B} :
   exists m3
   exists m2
   apply And.intro
-  · rw [comm]
+  · apply Commutative.comm
     trivial
   apply And.intro
   · trivial
   · trivial
 
-omit [BaseAlgebra M] in
 theorem Soundness.sA1 {φ : L B} :
     (∀ m : M, (S.interp m <| imp (sep φ ψ) χ)) -> (∀ m : M, (S.interp m <| imp φ (wand ψ χ))) := by
   simp [Kripke.BaseSemantics.interp_imp, Kripke.WeakSepSemantics.interp_sep, Kripke.WeakWandSemantics.interp_wand]
   intro H m1 m2 _ Hφ m3 Hψ
-  apply H (m2 ∗ m3) (m2 ∗ m3) Reflexive.refl m2 m3 (by rfl) Hφ Hψ
+  sorry
+  -- apply H (m2 ∗ m3) (m2 ∗ m3) Reflexive.refl m2 m3 (by rfl) Hφ Hψ
 
 omit [BaseAlgebra M] in
 theorem Soundness.sA2 {φ : L B} :
     (∀ m : M, (S.interp m <| imp φ (wand ψ χ))) -> (∀ m : M, S.interp m <| imp (sep φ ψ) χ) := by
   simp [Kripke.BaseSemantics.interp_imp, Kripke.WeakSepSemantics.interp_sep, Kripke.WeakWandSemantics.interp_wand]
   intro H m1 m2 m0m1 m3 m4 m3m42 Hφ Hψ
-  subst m3m42
-  apply H m3 m3 Reflexive.refl Hφ m4 Hψ
+  sorry
+  -- subst m3m42
+  -- apply H m3 m3 Reflexive.refl Hφ m4 Hψ
 
 theorem Soundness.semp {φ : L B} :
     ∀ m : M, S.interp m <| iff (sep φ emp) φ := by
@@ -470,14 +464,14 @@ theorem Soundness.semp {φ : L B} :
   · intro m1 _ m2 m3 m231 Hφ HI
     apply @BaseModel.mono _ _ _ _ _ _ _ _ _ _ m2 _ Hφ  -- FIXME (implicits)
     apply HI
-    rw [comm]
+    apply Commutative.comm
     trivial
   · intro m1 _ Hφ
     rcases (Unital.unital m1) with ⟨ m1u, ⟨ m1r, Em1, Hm1r ⟩, Hu ⟩
     exists m1r
     exists m1u
     apply And.intro
-    · rw [comm]
+    · apply Commutative.comm
       trivial
     apply And.intro
     · apply BaseModel.mono _ _ Hm1r Hφ
@@ -487,31 +481,33 @@ theorem Soundness.sassoc {φ : L B} :
     ∀ m : M, S.interp m <| imp (sep (sep φ ψ) χ) <| (sep φ (sep ψ χ)) := by
   simp [Kripke.BaseSemantics.interp_imp, Kripke.WeakSepSemantics.interp_sep]
   intro m0 m1 m0m1 m2 m3 m231 m4 m5 m452
-  subst m231
-  subst m452
+  -- subst m231
+  -- subst m452
   intro Hφ Hψ Hχ
   exists m4
-  exists (m5 ∗ m3)
-  apply And.intro
-  · rw [assoc]
-  apply And.intro
-  · trivial
-  exists m5
-  exists m3
+  sorry
+  -- exists (m5 ∗ m3)
+  -- apply And.intro
+  -- · rw [assoc]
+  -- apply And.intro
+  -- · trivial
+  -- exists m5
+  -- exists m3
 
 omit [BaseAlgebra M] in
 theorem Soundness.smono :
     (∀ m : M, (S.interp m <| imp φ1 ψ1)) -> (∀ m : M, S.interp m <| imp φ2 ψ2) -> (∀ m : M, S.interp m <| imp (sep φ1 φ2) (sep ψ1 ψ2)) := by
   simp [Kripke.BaseSemantics.interp_imp, Kripke.WeakSepSemantics.interp_sep]
   intro H1 H2 m0 m1 m01 m2 m3 m231 Hp1 Hp2
-  subst m231
-  exists m2
-  exists m3
-  apply And.intro
-  · rfl
-  apply And.intro
-  · apply H1 m2 m2 Reflexive.refl Hp1
-  · apply H2 m3 m3 Reflexive.refl Hp2
+  -- subst m231
+  sorry
+  -- exists m2
+  -- exists m3
+  -- apply And.intro
+  -- · rfl
+  -- apply And.intro
+  -- · apply H1 m2 m2 Reflexive.refl Hp1
+  -- · apply H2 m3 m3 Reflexive.refl Hp2
 
 end soundness
 
@@ -534,8 +530,8 @@ def Kripke.interp_flat (m : M) (e : L B) :  Prop :=
   | L.or l r   => interp_flat m l ∨ interp_flat m r
   | L.imp l r  => ∀ m0, m << m0 -> interp_flat m0 l -> interp_flat m0 r
   | L.emp      => is_increasing m
-  | L.sep l r  => ∃ m1 m2 : M, m1 ∗ m2 = m ∧ interp_flat m1 l ∧ interp_flat m2 r
-  | L.wand l r => ∀ m1 m2 : M, m ∗ m1 = m2 -> interp_flat m1 l -> interp_flat m2 r
+  | L.sep l r  => ∃ m1 m2 : M, (SepC.sepC m1 m2 m) ∧ interp_flat m1 l ∧ interp_flat m2 r
+  | L.wand l r => ∀ m1 m2 : M, (SepC.sepC m m1 m2) -> interp_flat m1 l -> interp_flat m2 r
 
 instance flat_semantics : Kripke.Semantics M B where
   interp := Kripke.interp_flat _ _
@@ -649,8 +645,8 @@ instance discrete_transitive (M : Type) : Transitive (discrete_order M).kle wher
 instance discrete_ainterp_trivial {M B : Type} : Kripke.AtomicInterp M B where
   ainterp _ _ := True
 
-instance sepC_unit : SepC Unit where
-  sepC _ _ := unit
+instance unit_sepC : SepC Unit where
+  sepC _ _ _ := True
 
 instance discrete_structure {M : Type} : Kripke.Structure M where
 
@@ -658,17 +654,30 @@ instance discrete_model {M : Type} : Kripke.Model M B where
   kle_ainterp_mono _ _ _ H _ := by rw [<- H]; trivial
 
 instance unit_SeparationAlgebra : SeparationAlgebra Unit where
-  assoc := by intros; trivial
+  assoc := by
+    intros
+    exists unit
   comm  := by intros; trivial
 
 instance unit_UCSA : UCSA Unit where
-  ucsa := by simp [Kripke.Ord.kle]
+  ucsa := by
+    simp [Kripke.Ord.kle]
+    intros
+    exists unit
+    exists unit
 
 instance unit_DCSA : DCSA Unit where
-  dcsa := by simp [Kripke.Ord.kle]
+  dcsa := by
+    simp [Kripke.Ord.kle]
+    intros
+    exists unit
 
 instance unit_Unital : Unital Unit where
-  unital := by simp [residue, Kripke.is_increasing, Kripke.Ord.kle]
+  unital := by
+    intros
+    exists unit
+    simp [residue, Kripke.is_increasing, Kripke.Ord.kle]
+    exists unit
 
 instance unit_BaseAlgebra : BaseAlgebra Unit where
 
@@ -683,6 +692,47 @@ theorem IPSL_sound {B : Type} : @IPSL_deriv B bot -> False := by
 
 end IPSL_triv_model
 
+
+
+section DiscreteHeap
+
+abbrev Hfrag (Loc Val : Type u) : Type u := Loc -> Option Val
+
+def dom {Loc Val : Type} (h : Hfrag Loc Val) (l : Loc) : Prop :=
+  match (h l) with
+  | some _ => True
+  | none => False
+
+def ext {Loc Val : Type} (h1 h2 : Hfrag Loc Val) : Prop :=
+  ∀ l, dom h1 l -> dom h2 l
+
+def disj {Loc Val : Type} (h1 h2 : Hfrag Loc Val) : Prop :=
+  ∀ l, dom h1 l ∧ dom h2 l -> False
+
+/-
+
+instance heap_extension_order (Loc Val : Type) : Kripke.Ord (Hfrag Loc Val) where
+  kle := ext
+
+instance heap_extension_reflexive (Loc Val : Type) : Reflexive (heap_extension_order Loc Val).kle where
+  refl := by simp [heap_extension_order, ext]
+
+instance heap_extension_transitive (Loc Val : Type) : Transitive (heap_extension_order Loc Val).kle where
+  trans := by
+    simp [heap_extension_order, ext]
+    intros _ _ _ H1 H2 _ _
+    apply H2
+    apply H1
+    trivial
+
+instance heap_extension_ainterp_trivial {Loc Val B : Type} : Kripke.AtomicInterp (Hfrag Loc Val) B where
+  ainterp _ _ := True
+
+instance heap_extension_sepC {Loc Val : Type} : SepC (Hfrag Loc Val) where
+  sepC x y :=  x y
+-/
+
+end DiscreteHeap
 
 
 
@@ -709,8 +759,8 @@ def Kripke.interp_upwards (m : M) (e : L B) : Prop :=
   | L.or l r   => interp_upwards m l ∨ interp_upwards m r
   | L.imp l r  => ∀ m0, m << m0 -> interp_upwards m0 l -> interp_upwards m0 r
   | L.emp      => is_increasing m
-  | L.sep l r  => ∃ m1 m2 : M, m1 ∗ m2 = m ∧ interp_upwards m1 l ∧ interp_upwards m2 r
-  | L.wand l r => ∀ m0 m1 m2 : M, m << m0 -> m0 ∗ m1 = m2 -> interp_upwards m1 l -> interp_upwards m2 r
+  | L.sep l r  => ∃ m1 m2 : M, (SepC.sepC m1 m2 m) ∧ interp_upwards m1 l ∧ interp_upwards m2 r
+  | L.wand l r => ∀ m0 m1 m2 : M, m << m0 -> (SepC.sepC m0 m1 m2) -> interp_upwards m1 l -> interp_upwards m2 r
 
 
 instance upwards_semantics : Kripke.Semantics M B where
@@ -745,8 +795,8 @@ def Kripke.interp_downwards (m : M) (e : L B) : Prop :=
   | L.or l r   => interp_downwards m l ∨ interp_downwards m r
   | L.imp l r  => ∀ m0, m << m0 -> interp_downwards m0 l -> interp_downwards m0 r
   | L.emp      => is_increasing m
-  | L.sep l r  =>  ∃ m0 m1 m2 : M, m0 << m ∧ m1 ∗ m2 = m0 ∧ interp_downwards m1 l ∧ interp_downwards m2 r
-  | L.wand l r => ∀ m1 m2 : M, m ∗ m1 = m2 -> interp_downwards m1 l -> interp_downwards m2 r
+  | L.sep l r  =>  ∃ m0 m1 m2 : M, m0 << m ∧ (SepC.sepC m1 m2 m0) ∧ interp_downwards m1 l ∧ interp_downwards m2 r
+  | L.wand l r => ∀ m1 m2 : M, (SepC.sepC m m1 m2) -> interp_downwards m1 l -> interp_downwards m2 r
 
 
 instance downwards_semantics : Kripke.Semantics M B where
