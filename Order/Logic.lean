@@ -194,14 +194,10 @@ theorem Mono.weak_wand [W : Kripke.WeakWandSemantics M B S] [DCSA M] :
     Kripke.monotonic_denotation S (L.wand e1 e2) := by
   unfold Kripke.monotonic_denotation
   simp [W.interp_wand]
-  intro H2 m n Hmn H m1 He1
-  have Hm1 : m1 << m1 := by apply Reflexive.refl
-  sorry
-  -- rcases (@DCSA.dcsa _ _ _ _ m m1 (m ∗ m1) n m1 (by rfl) Hmn Hm1) with ⟨ n', Hn', Hn'mm1 ⟩
-  -- apply (H2 Hn'mm1)
-  -- rw [<- Hn']
-  -- apply H
-  -- apply He1
+  intro H2 m0 m1 m0m1 H3 m2 m3 m023 He1
+  rcases (@DCSA.dcsa M _ _ _ m0 m2 m3 m1 m2 m023 m0m1 Reflexive.refl) with ⟨ m4, m124, m43⟩
+  have H3' := H3 m2 m4 m124 He1
+  apply @H2 m3 m4 m43 H3'
 
 
 /-- Strong conjunction has monotonic denotation -/
