@@ -519,7 +519,7 @@ end soundness
 
 section semantics_inst
 
-variable {M : Type}
+variable (M B : Type)
 variable [Kripke.Ord M] [Kripke.Structure M] [SepC M] [Kripke.Model M B]
 
 /--
@@ -538,25 +538,25 @@ def Kripke.interp_flat (m : M) (e : L B) :  Prop :=
   | L.wand l r => ∀ m1 m2 : M, m ∗ m1 = m2 -> interp_flat m1 l -> interp_flat m2 r
 
 instance flat_semantics : Kripke.Semantics M B where
-  interp := Kripke.interp_flat
+  interp := Kripke.interp_flat _ _
 
-instance flat_base : Kripke.BaseSemantics M B flat_semantics where
+instance flat_base : Kripke.BaseSemantics M B (flat_semantics M B) where
   interp_base := by simp [Kripke.Semantics.interp]
   interp_bot  := by simp [Kripke.Semantics.interp]
   interp_and  := by simp [Kripke.Semantics.interp]
   interp_or   := by simp [Kripke.Semantics.interp]
   interp_imp  := by simp [Kripke.Semantics.interp]
 
-instance flat_weak_wand : Kripke.WeakWandSemantics M B flat_semantics where
+instance flat_weak_wand : Kripke.WeakWandSemantics M B (flat_semantics M B) where
   interp_wand := by simp [Kripke.Semantics.interp]
 
-instance flat_weak_sep : Kripke.WeakSepSemantics M B flat_semantics where
+instance flat_weak_sep : Kripke.WeakSepSemantics M B (flat_semantics M B) where
   interp_sep  := by simp [Kripke.Semantics.interp]
 
-instance flat_emp : Kripke.EmpSemantics M B flat_semantics where
+instance flat_emp : Kripke.EmpSemantics M B (flat_semantics M B) where
   interp_emp  := by simp [Kripke.Semantics.interp]
 
-instance flat_flat : Kripke.FlatSemantics M B flat_semantics where
+instance flat_flat : Kripke.FlatSemantics M B (flat_semantics M B) where
 
 end semantics_inst
 
@@ -637,24 +637,24 @@ open PUnit
 # A trivial Kripke model to show the soundness of IPSL
 -/
 
-instance discrete_order (T : Type) : Kripke.Ord T where
+instance discrete_order (M : Type) : Kripke.Ord M where
   kle := Eq
 
-instance discrete_reflexive (T : Type) : Reflexive (discrete_order T).kle where
+instance discrete_reflexive (M : Type) : Reflexive (discrete_order M).kle where
   refl := by simp [discrete_order]
 
-instance discrete_transitive (T : Type) : Transitive (discrete_order T).kle where
+instance discrete_transitive (M : Type) : Transitive (discrete_order M).kle where
   trans := by simp [discrete_order]
 
-instance discrete_ainterp_trivial {T1 T2: Type} : Kripke.AtomicInterp T1 T2 where
+instance discrete_ainterp_trivial {M B : Type} : Kripke.AtomicInterp M B where
   ainterp _ _ := True
 
 instance sepC_unit : SepC Unit where
   sepC _ _ := unit
 
-instance discrete_structure {T : Type} : Kripke.Structure T where
+instance discrete_structure {M : Type} : Kripke.Structure M where
 
-instance discrete_model {T : Type} : Kripke.Model T Unit  where
+instance discrete_model {M : Type} : Kripke.Model M B where
   kle_ainterp_mono _ _ _ H _ := by rw [<- H]; trivial
 
 instance unit_SeparationAlgebra : SeparationAlgebra Unit where
@@ -672,12 +672,13 @@ instance unit_Unital : Unital Unit where
 
 instance unit_BaseAlgebra : BaseAlgebra Unit where
 
+
 /--
 Soundness for IPSL: bot is not derivable, or else False would be derivable in Lean.
 -/
-theorem IPSL_sound : @IPSL_deriv Unit bot -> False := by
+theorem IPSL_sound {B : Type} : @IPSL_deriv B bot -> False := by
   intro Hbot_proof
-  have Hbot_proof_interp := IPSL_kripke_soundness Unit Unit flat_semantics bot Hbot_proof unit
+  have Hbot_proof_interp := IPSL_kripke_soundness Unit B (flat_semantics Unit B) bot Hbot_proof unit
   simp [Kripke.Semantics.interp] at Hbot_proof_interp
 
 end IPSL_triv_model
