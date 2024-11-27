@@ -494,16 +494,14 @@ omit [BaseAlgebra M] in
 theorem Soundness.smono :
     (∀ m : M, (S.interp m <| imp φ1 ψ1)) -> (∀ m : M, S.interp m <| imp φ2 ψ2) -> (∀ m : M, S.interp m <| imp (sep φ1 φ2) (sep ψ1 ψ2)) := by
   simp [Kripke.BaseSemantics.interp_imp, Kripke.WeakSepSemantics.interp_sep]
-  intro H1 H2 m0 m1 m01 m2 m3 m231 Hp1 Hp2
-  -- subst m231
-  sorry
-  -- exists m2
-  -- exists m3
-  -- apply And.intro
-  -- · rfl
-  -- apply And.intro
-  -- · apply H1 m2 m2 Reflexive.refl Hp1
-  -- · apply H2 m3 m3 Reflexive.refl Hp2
+  intro H1 H2 m0 m1 _ m2 m3 m231 Hp1 Hp2
+  exists m2
+  exists m3
+  apply And.intro
+  · trivial
+  apply And.intro
+  · apply H1 m2 m2 Reflexive.refl Hp1
+  · apply H2 m3 m3 Reflexive.refl Hp2
 
 end soundness
 
