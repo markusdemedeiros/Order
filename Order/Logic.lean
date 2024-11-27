@@ -681,7 +681,7 @@ theorem IPSL_sound {B : Type} : @IPSL_deriv B bot -> False := by
 end IPSL_triv_model
 
 
-
+/-
 section DiscreteHeap
 
 abbrev Hfrag (Loc Val : Type u) : Type u := Loc -> Option Val
@@ -697,7 +697,12 @@ def ext {Loc Val : Type} (h1 h2 : Hfrag Loc Val) : Prop :=
 def disj {Loc Val : Type} (h1 h2 : Hfrag Loc Val) : Prop :=
   ∀ l, dom h1 l ∧ dom h2 l -> False
 
-/-
+@[simp]
+def sep {Loc Val : Type} (h1 h2 h3 : Hfrag Loc Val) : Prop :=
+  disj h1 h2 ∧
+  (∀ l, dom h3 l -> dom h1 l ∨ dom h2 l ) ∧
+  (∀ l, dom h1 l -> h1 l = h3 l) ∧
+  (∀ l, dom h2 l -> h2 l = h3 l)
 
 instance heap_extension_order (Loc Val : Type) : Kripke.Ord (Hfrag Loc Val) where
   kle := ext
@@ -717,10 +722,50 @@ instance heap_extension_ainterp_trivial {Loc Val B : Type} : Kripke.AtomicInterp
   ainterp _ _ := True
 
 instance heap_extension_sepC {Loc Val : Type} : SepC (Hfrag Loc Val) where
-  sepC x y :=  x y
--/
+  sepC := sep
+
+instance heap_extension_structure {Loc Val : Type} : Kripke.Structure (Hfrag Loc Val) where
+
+instance heap_extension_model {Loc Val : Type} : Kripke.Model (Hfrag Loc Val) B where
+  kle_ainterp_mono := by intros; simp [Kripke.AtomicInterp.ainterp]
+
+
+instance heap_extension_SeparationAlgebra : SeparationAlgebra (Hfrag Loc Val) where
+  assoc := by
+    intros x y z xy xyz
+    simp [SepC.sepC]
+    intro H1 H2 H3 H4 H5 H6 H7 H8
+    sorry
+  comm  := by
+    sorry
+
+instance heap_extension_UCSA {Loc Val : Type} : UCSA (Hfrag Loc Val) where
+  ucsa := by
+    simp [Kripke.Ord.kle]
+    intros
+    sorry
+    -- exists unit
+    -- exists unit
+
+instance heap_extension_DCSA {Loc Val : Type} : DCSA (Hfrag Loc Val) where
+  dcsa := by
+    simp [Kripke.Ord.kle]
+    intros
+    sorry
+    -- exists unit
+
+instance heap_extension_Unital {Loc Val : Type} : Unital (Hfrag Loc Val) where
+  unital := by
+    intros
+    sorry
+    -- exists unit
+    -- simp [residue, Kripke.is_increasing, Kripke.Ord.kle]
+    -- exists unit
+
+instance heap_extension_BaseAlgebra {Loc Val : Type} : BaseAlgebra (Hfrag Loc Val) where
 
 end DiscreteHeap
+-/
 
 
 
