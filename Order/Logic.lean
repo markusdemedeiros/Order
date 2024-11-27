@@ -298,7 +298,6 @@ theorem Mono.emp_dcsa [Kripke.EmpSemantics M B S] [DCSA M] :
   /-
   apply Transitive.trans ?G1 ?G2
   rcases (DCSA.dcsa ?G1 Hnm Reflexive.refl) with ⟨ n', Hn', H'n' ⟩
-  sorry
   -- rw [<- Hn']
   -- apply h1
   -/
@@ -438,12 +437,13 @@ theorem Soundness.scomm {φ : L B} :
   · trivial
   · trivial
 
+omit [BaseAlgebra M] in
 theorem Soundness.sA1 {φ : L B} :
     (∀ m : M, (S.interp m <| imp (sep φ ψ) χ)) -> (∀ m : M, (S.interp m <| imp φ (wand ψ χ))) := by
   simp [Kripke.BaseSemantics.interp_imp, Kripke.WeakSepSemantics.interp_sep, Kripke.WeakWandSemantics.interp_wand]
-  intro H m1 m2 _ Hφ m3 Hψ
-  sorry
-  -- apply H (m2 ∗ m3) (m2 ∗ m3) Reflexive.refl m2 m3 (by rfl) Hφ Hψ
+  intro H m1 m2 _ Hφ m3 m4 m234 Hψ
+  apply H m4 m4 Reflexive.refl m2 m3 m234 Hφ Hψ
+
 
 omit [BaseAlgebra M] in
 theorem Soundness.sA2 {φ : L B} :
