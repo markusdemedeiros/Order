@@ -310,7 +310,7 @@ theorem Mono.emp_dcsa [Kripke.EmpSemantics M B S] [DCSA M] :
 Monotonicity of the flat semantics in a base model (Base algebra with flat semantics )
 -/
 theorem BaseModel.mono [BaseAlgebra M] [Kripke.FlatSemantics M B S] :
-    ∀ {e}, Kripke.monotonic_denotation S e := by
+    ∀ e, Kripke.monotonic_denotation S e := by
   intro e
   induction e
   · apply Mono.base
@@ -340,6 +340,10 @@ variable (S : Kripke.Semantics M B)
 variable [BaseAlgebra M]
 variable [Kripke.FlatSemantics M B S]
 
+-- FIXME: What are the right typeclass hints to get this automatically?
+def comm := @Std.Commutative.comm M SepC.sepC _
+def assoc := @Std.Associative.assoc M SepC.sepC _
+
 theorem Soundness.imp1 {φ ψ : L B} :
     ∀ m : M, S.interp m <| imp φ <| imp ψ φ := by
   intro m
@@ -367,7 +371,7 @@ theorem Soundness.andI {φ ψ : L B} :
   simp [Kripke.BaseSemantics.interp_imp, Kripke.BaseSemantics.interp_and]
   intro m0 m1 _ Hφ m3 Hm1m3 Hψ
   apply And.intro
-  · apply BaseModel.mono _ Hm1m3
+  · apply BaseModel.mono _ _ Hm1m3
     trivial
   · trivial
 
@@ -435,60 +439,53 @@ theorem Soundness.scomm {φ : L B} :
   exists m3
   exists m2
   apply And.intro
-  ·
-    sorry
-    -- rw [SeparationAlgebra.sepC_comm]
-    -- trivial
+  · rw [comm]
+    trivial
   apply And.intro
   · trivial
   · trivial
 
-/-
-theorem Soundness.sA1 {φ : L B}
-    [Kripke.Structure M] (S : Kripke.Semantics M B) [Kripke.Model M B] [SoundIPModel M] [FlatSemantics M B S] [SeparationAlgebra M] :
+omit [BaseAlgebra M] in
+theorem Soundness.sA1 {φ : L B} :
     (∀ m : M, (S.interp m <| imp (sep φ ψ) χ)) -> (∀ m : M, (S.interp m <| imp φ (wand ψ χ))) := by
-  simp [Kripke.Semantics.interp_imp, Kripke.WeakSepSemantics.interp_sep, Kripke.WeakWandSemantics.interp_wand]
+  simp [Kripke.BaseSemantics.interp_imp, Kripke.WeakSepSemantics.interp_sep, Kripke.WeakWandSemantics.interp_wand]
   intro H m1 m2 _ Hφ m3 Hψ
-  apply H (m2 ∗ m3) (m2 ∗ m3) (Kripke.Structure.kle_refl (m2 ∗ m3)) m2 m3 (by rfl) Hφ Hψ
+  apply H (m2 ∗ m3) (m2 ∗ m3) Reflexive.refl m2 m3 (by rfl) Hφ Hψ
 
-theorem Soundness.sA2 {φ : L B}
-    [Kripke.Structure M] (S : Kripke.Semantics M B) [Kripke.Model M B] [SoundIPModel M] [FlatSemantics M B S] [SeparationAlgebra M] :
+omit [BaseAlgebra M] in
+theorem Soundness.sA2 {φ : L B} :
     (∀ m : M, (S.interp m <| imp φ (wand ψ χ))) -> (∀ m : M, S.interp m <| imp (sep φ ψ) χ) := by
-  simp [Kripke.Semantics.interp_imp, Kripke.WeakSepSemantics.interp_sep, Kripke.WeakWandSemantics.interp_wand]
+  simp [Kripke.BaseSemantics.interp_imp, Kripke.WeakSepSemantics.interp_sep, Kripke.WeakWandSemantics.interp_wand]
   intro H m1 m2 m0m1 m3 m4 m3m42 Hφ Hψ
   subst m3m42
-  apply H m3 m3 (Kripke.Structure.kle_refl m3) Hφ m4 Hψ
+  apply H m3 m3 Reflexive.refl Hφ m4 Hψ
 
-theorem Soundness.semp {φ : L B}
-    [Kripke.Structure M] (S : Kripke.Semantics M B) [Kripke.Model M B] [SoundIPModel M] [FlatSemantics M B S] [SeparationAlgebra M] :
+theorem Soundness.semp {φ : L B} :
     ∀ m : M, S.interp m <| iff (sep φ emp) φ := by
   unfold L.iff
-  simp [Kripke.Semantics.interp_and, Kripke.Semantics.interp_imp, Kripke.WeakSepSemantics.interp_sep, Kripke.EmpSemantics.interp_emp]
+  simp [Kripke.BaseSemantics.interp_and, Kripke.BaseSemantics.interp_imp,
+       Kripke.WeakSepSemantics.interp_sep, Kripke.EmpSemantics.interp_emp]
   intro m0
   apply And.intro
   · intro m1 _ m2 m3 m231 Hφ HI
-    apply SoundIPModel.mono _ _ _ _ _ m2 ?G2 ?G3
-    · apply HI
-      sorry
-      -- rw [SA.sepC_comm]
-      -- trivial
-    · trivial
+    apply @BaseModel.mono _ _ _ _ _ _ _ _ _ _ m2 _ Hφ  -- FIXME (implicits)
+    apply HI
+    rw [comm]
+    trivial
   · intro m1 _ Hφ
     rcases (Unital.unital m1) with ⟨ m1u, ⟨ m1r, Em1, Hm1r ⟩, Hu ⟩
     exists m1r
     exists m1u
     apply And.intro
-    · sorry
-      -- rw [SA.sepC_comm]
-      -- trivial
+    · rw [comm]
+      trivial
     apply And.intro
-    · apply SoundIPModel.mono _ _ _ _ _ m1 Hm1r Hφ
+    · apply BaseModel.mono _ _ Hm1r Hφ
     · trivial
 
-theorem Soundness.sassoc {φ : L B}
-    [Kripke.Structure M] (S : Kripke.Semantics M B) [Kripke.Model M B] [SoundIPModel M] [FlatSemantics M B S] [SeparationAlgebra M] :
+theorem Soundness.sassoc {φ : L B} :
     ∀ m : M, S.interp m <| imp (sep (sep φ ψ) χ) <| (sep φ (sep ψ χ)) := by
-  simp [Kripke.Semantics.interp_imp, Kripke.WeakSepSemantics.interp_sep]
+  simp [Kripke.BaseSemantics.interp_imp, Kripke.WeakSepSemantics.interp_sep]
   intro m0 m1 m0m1 m2 m3 m231 m4 m5 m452
   subst m231
   subst m452
@@ -496,18 +493,16 @@ theorem Soundness.sassoc {φ : L B}
   exists m4
   exists (m5 ∗ m3)
   apply And.intro
-  ·
-    sorry
-    -- apply Eq.symm (SA.sepC_assoc m4 m5 m3)
+  · rw [assoc]
   apply And.intro
   · trivial
   exists m5
   exists m3
 
-theorem Soundness.smono
-    [Kripke.Structure M] (S : Kripke.Semantics M B) [Kripke.Model M B] [SoundIPModel M] [FlatSemantics M B S] [SeparationAlgebra M] :
+omit [BaseAlgebra M] in
+theorem Soundness.smono :
     (∀ m : M, (S.interp m <| imp φ1 ψ1)) -> (∀ m : M, S.interp m <| imp φ2 ψ2) -> (∀ m : M, S.interp m <| imp (sep φ1 φ2) (sep ψ1 ψ2)) := by
-  simp [Kripke.Semantics.interp_imp, Kripke.WeakSepSemantics.interp_sep]
+  simp [Kripke.BaseSemantics.interp_imp, Kripke.WeakSepSemantics.interp_sep]
   intro H1 H2 m0 m1 m01 m2 m3 m231 Hp1 Hp2
   subst m231
   exists m2
@@ -515,17 +510,61 @@ theorem Soundness.smono
   apply And.intro
   · rfl
   apply And.intro
-  · apply H1 m2 m2 (Kripke.Structure.kle_refl m2) Hp1
-  · apply H2 m3 m3 (Kripke.Structure.kle_refl m3) Hp2
+  · apply H1 m2 m2 Reflexive.refl Hp1
+  · apply H2 m3 m3 Reflexive.refl Hp2
 
--/
 end soundness
 
-/-
-/-
-Soundness for the extensions
--/
 
+
+section semantics_inst
+
+variable {M : Type}
+variable [Kripke.Ord M] [Kripke.Structure M] [SepC M] [Kripke.Model M B]
+
+/--
+Flat semantics: both sep and wand are weak
+-/
+@[simp]
+def Kripke.interp_flat (m : M) (e : L B) :  Prop :=
+  match e with
+  | L.base b   => Kripke.AtomicInterp.ainterp m b
+  | L.bot      => False
+  | L.and l r  => interp_flat m l ∧ interp_flat m r
+  | L.or l r   => interp_flat m l ∨ interp_flat m r
+  | L.imp l r  => ∀ m0, m << m0 -> interp_flat m0 l -> interp_flat m0 r
+  | L.emp      => is_increasing m
+  | L.sep l r  => ∃ m1 m2 : M, m1 ∗ m2 = m ∧ interp_flat m1 l ∧ interp_flat m2 r
+  | L.wand l r => ∀ m1 m2 : M, m ∗ m1 = m2 -> interp_flat m1 l -> interp_flat m2 r
+
+instance flat_semantics : Kripke.Semantics M B where
+  interp := Kripke.interp_flat
+
+instance flat_base : Kripke.BaseSemantics M B flat_semantics where
+  interp_base := by simp [Kripke.Semantics.interp]
+  interp_bot  := by simp [Kripke.Semantics.interp]
+  interp_and  := by simp [Kripke.Semantics.interp]
+  interp_or   := by simp [Kripke.Semantics.interp]
+  interp_imp  := by simp [Kripke.Semantics.interp]
+
+instance flat_weak_wand : Kripke.WeakWandSemantics M B flat_semantics where
+  interp_wand := by simp [Kripke.Semantics.interp]
+
+instance flat_weak_sep : Kripke.WeakSepSemantics M B flat_semantics where
+  interp_sep  := by simp [Kripke.Semantics.interp]
+
+instance flat_emp : Kripke.EmpSemantics M B flat_semantics where
+  interp_emp  := by simp [Kripke.Semantics.interp]
+
+instance flat_flat : Kripke.FlatSemantics M B flat_semantics where
+
+end semantics_inst
+
+
+
+
+
+section IPSL
 
 
 /-
@@ -550,30 +589,9 @@ inductive IPSL_deriv {B : Type} : L B -> Prop
 | sassoc : IPSL_deriv (imp (sep (sep φ ψ) χ) <| (sep φ (sep ψ χ)))
 | smono  : IPSL_deriv (imp φ1 ψ1) -> IPSL_deriv (imp φ2 ψ2) -> IPSL_deriv (imp (sep φ1 φ2) (sep ψ1 ψ2))
 
-/-
-instance ISPL_deriv_IP_inst {B} : IP (@IPSL_deriv B) where
-mp     := IPSL_deriv.mp
-imp1   := IPSL_deriv.imp1
-imp2   := IPSL_deriv.imp2
-andI   := IPSL_deriv.andI
-andE1  := IPSL_deriv.andE1
-andE2  := IPSL_deriv.andE2
-orI1   := IPSL_deriv.orI1
-orI2   := IPSL_deriv.orI2
-orE    := IPSL_deriv.orE
-botE   := IPSL_deriv.botE
 
-instance ISPL_deriv_SL_inst {B} : SL (@IPSL_deriv B) where
-scomm  := IPSL_deriv.scomm
-sA1    := IPSL_deriv.sA1
-sA2    := IPSL_deriv.sA2
-semp   := IPSL_deriv.semp
-sassoc := IPSL_deriv.sassoc
-smono  := IPSL_deriv.smono
--/
-
-
-theorem IPSL_kripke_soundness {B : Type} [Kripke.Structure M] (S : Kripke.Semantics M B) [Kripke.Model M B] [SoundIPModel M] [FlatSemantics M B S] :
+theorem IPSL_kripke_soundness (M B : Type) [Kripke.Ord M] [Kripke.Structure M] [SepC M] (S : Kripke.Semantics M B)
+    [BaseAlgebra M] [Kripke.FlatSemantics M B S] :
     ∀ φ : L B, IPSL_deriv φ -> ∀ m, S.interp m φ := by
   intro φ H
   induction H
@@ -602,41 +620,46 @@ theorem IPSL_kripke_soundness {B : Type} [Kripke.Structure M] (S : Kripke.Semant
     · trivial
     · trivial
 
+end IPSL
 
 
 
+
+
+
+
+
+section IPSL_triv_model
+
+open PUnit
 
 /-
-section sound_model
+# A trivial Kripke model to show the soundness of IPSL
+-/
 
--- Now if we can exhibit _some_ Kripke model with the above requirements, to prove the IPSL system is sound
-
-instance discrete_order {T : Type} : Kripke.Ord T where
+instance discrete_order (T : Type) : Kripke.Ord T where
   kle := Eq
 
-instance discrete_structure {T : Type} : Kripke.Structure T where
-  kle_refl _ := by rfl
-  kle_trans := by
-    unfold Kripke.Ord.kle
-    unfold discrete_order
-    simp
+instance discrete_reflexive (T : Type) : Reflexive (discrete_order T).kle where
+  refl := by simp [discrete_order]
 
-instance discrete_triv_ainterp {T1 T2: Type} : Kripke.AtomicInterp T1 T2 where
+instance discrete_transitive (T : Type) : Transitive (discrete_order T).kle where
+  trans := by simp [discrete_order]
+
+instance discrete_ainterp_trivial {T1 T2: Type} : Kripke.AtomicInterp T1 T2 where
   ainterp _ _ := True
 
 instance sepC_unit : SepC Unit where
-  sepC _ _ := PUnit.unit
+  sepC _ _ := unit
 
--- #check
+instance discrete_structure {T : Type} : Kripke.Structure T where
+
 instance discrete_model {T : Type} : Kripke.Model T Unit  where
   kle_ainterp_mono _ _ _ H _ := by rw [<- H]; trivial
 
-
-
-instance unit_SA : SeparationAlgebra Unit where
-  sepC_assoc := by sorry
-  sepC_comm  := by sorry
-
+instance unit_SeparationAlgebra : SeparationAlgebra Unit where
+  assoc := by intros; trivial
+  comm  := by intros; trivial
 
 instance unit_UCSA : UCSA Unit where
   ucsa := by simp [Kripke.Ord.kle]
@@ -645,56 +668,34 @@ instance unit_DCSA : DCSA Unit where
   dcsa := by simp [Kripke.Ord.kle]
 
 instance unit_Unital : Unital Unit where
-  unital := by simp [residue, is_increasing, Kripke.Ord.kle]
+  unital := by simp [residue, Kripke.is_increasing, Kripke.Ord.kle]
 
-instance unit_SoundIPModel : SoundIPModel Unit where
-  inst_sepC := sepC_unit
-  inst_SA := unit_SA
-  inst_ucsa := unit_UCSA
-  inst_dcsa := unit_DCSA
-  inst_unital := unit_Unital
-
-
-def UnitSemantics : Kripke.Semantics Unit Unit := (@flat_semantics Unit Unit _ _ _)
-
-instance unit_empSemantics : Kripke.EmpSemantics Unit Unit UnitSemantics where
-  interp_emp := by simp [Kripke.Semantics.interp, UnitSemantics, flat_semantics]
-
-instance unit_weakWand : Kripke.WeakWandSemantics Unit Unit UnitSemantics where
-  interp_wand := by simp [Kripke.Semantics.interp, UnitSemantics, flat_semantics]
-
-instance unit_weakSep : Kripke.WeakSepSemantics Unit Unit UnitSemantics where
-  interp_sep := by simp [Kripke.Semantics.interp, UnitSemantics, flat_semantics]
-
-instance unit_flatSemantics : FlatSemantics Unit _ UnitSemantics where
-  inst_EmpSemantics := unit_empSemantics
-  inst_WeakWandSemantics := unit_weakWand
-  inst_WeakSepSemantics := unit_weakSep
-
--- theorem IPSL_unit_soundness : @IPSL_deriv Unit bot -> False := by
---   intro K
---   have X := @IPSL_kripke_soundness Unit Unit _ UnitSemantics discrete_model unit_SoundIPModel _ bot K PUnit.unit
---   simp [Kripke.Semantics.interp, UnitSemantics, flat_semantics] at X
-
-end sound_model
--/
--/
-/-
+instance unit_BaseAlgebra : BaseAlgebra Unit where
 
 /--
-Flat semantics: both sep and wand are weak
+Soundness for IPSL: bot is not derivable, or else False would be derivable in Lean.
 -/
-@[simp]
-def Kripke.interp_flat [Kripke.Structure M] [Kripke.AtomicInterp M B] [SepC M] (m : M) (e : L B) :  Prop :=
-  match e with
-  | L.base b   => Kripke.AtomicInterp.ainterp m b
-  | L.bot      => False
-  | L.and l r  => interp_flat m l ∧ interp_flat m r
-  | L.or l r   => interp_flat m l ∨ interp_flat m r
-  | L.imp l r  => ∀ m0, m << m0 -> interp_flat m0 l -> interp_flat m0 r
-  | L.emp      => is_increasing m
-  | L.sep l r  => ∃ m1 m2 : M, m1 ∗ m2 = m ∧ interp_flat m1 l ∧ interp_flat m2 r
-  | L.wand l r => ∀ m1 m2 : M, m ∗ m1 = m2 -> interp_flat m1 l -> interp_flat m2 r
+theorem IPSL_sound : @IPSL_deriv Unit bot -> False := by
+  intro Hbot_proof
+  have Hbot_proof_interp := IPSL_kripke_soundness Unit Unit flat_semantics bot Hbot_proof unit
+  simp [Kripke.Semantics.interp] at Hbot_proof_interp
+
+end IPSL_triv_model
+
+
+
+
+
+
+
+
+
+
+
+
+
+/-
+
 
 /--
 Upwards semantics: both sep is weak and wand is strong
@@ -726,33 +727,6 @@ def Kripke.interp_downwards [Kripke.Structure M] [Kripke.AtomicInterp M B] [SepC
   | L.sep l r  =>  ∃ m0 m1 m2 : M, m0 << m ∧ m1 ∗ m2 = m0 ∧ interp_downwards m1 l ∧ interp_downwards m2 r
   | L.wand l r => ∀ m1 m2 : M, m ∗ m1 = m2 -> interp_downwards m1 l -> interp_downwards m2 r
 
-
-/-
-Instances of the general interfaces for flat, upwards, and downwards semantics
--/
-
-instance flat_semantics [Kripke.Structure M] [Kripke.AtomicInterp M B] [SepC M] : Kripke.Semantics M B where
-  interp := Kripke.interp_flat
-  interp_base := by simp
-  interp_bot  := by simp
-  interp_and  := by simp
-  interp_or   := by simp
-  interp_imp  := by simp
-
-instance flat_weak_wand [Kripke.Structure M] [Kripke.AtomicInterp M B] [SepC M]  : Kripke.WeakWandSemantics M B flat_semantics where
-  interp_wand := by simp [Kripke.Semantics.interp]
-
-instance flat_weak_sep [Kripke.Structure M] [Kripke.AtomicInterp M B] [SepC M]  : Kripke.WeakSepSemantics M B flat_semantics where
-  interp_sep := by simp [Kripke.Semantics.interp]
-
-instance upwards_semantics [Kripke.Structure M] [Kripke.AtomicInterp M B] [SepC M] : Kripke.Semantics M B where
-  interp := Kripke.interp_upwards
-  interp_base := by simp
-  interp_bot  := by simp
-  interp_and  := by simp
-  interp_or   := by simp
-  interp_imp  := by simp
-
 instance upwards_strong_wand [Kripke.Structure M] [Kripke.AtomicInterp M B] [SepC M]  : Kripke.StrongWandSemantics M B upwards_semantics where
   interp_wand := by simp [Kripke.Semantics.interp]
 
@@ -782,4 +756,26 @@ instance downwards_strong_sep [Kripke.Structure M] [Kripke.AtomicInterp M B] [Se
 -- TODO: In upwards and downwards closed model, all programs in the flat semantics have monotonic denotation
 
 -- TODO: Semantic equivalence lemmas
+-/
+
+/-
+instance ISPL_deriv_IP_inst {B} : IP (@IPSL_deriv B) where
+mp     := IPSL_deriv.mp
+imp1   := IPSL_deriv.imp1
+imp2   := IPSL_deriv.imp2
+andI   := IPSL_deriv.andI
+andE1  := IPSL_deriv.andE1
+andE2  := IPSL_deriv.andE2
+orI1   := IPSL_deriv.orI1
+orI2   := IPSL_deriv.orI2
+orE    := IPSL_deriv.orE
+botE   := IPSL_deriv.botE
+
+instance ISPL_deriv_SL_inst {B} : SL (@IPSL_deriv B) where
+scomm  := IPSL_deriv.scomm
+sA1    := IPSL_deriv.sA1
+sA2    := IPSL_deriv.sA2
+semp   := IPSL_deriv.semp
+sassoc := IPSL_deriv.sassoc
+smono  := IPSL_deriv.smono
 -/
