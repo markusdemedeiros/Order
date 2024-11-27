@@ -290,14 +290,12 @@ theorem Mono.emp_dcsa [Kripke.EmpSemantics M B S] [DCSA M] :
   intro m n Hnm
   simp [Kripke.is_increasing]
   intro h1 m2 mm2 HS
+  rcases (@DCSA.dcsa M _ _ _ m m2 mm2 n m2 HS Hnm Reflexive.refl) with ⟨ m3, n23, m32 ⟩
+  have h1' := h1 m2 m3 n23
+  apply Transitive.trans
+  · trivial
+  · trivial
 
-  /-
-  apply Transitive.trans ?G1 ?G2
-  rcases (DCSA.dcsa ?G1 Hnm Reflexive.refl) with ⟨ n', Hn', H'n' ⟩
-  -- rw [<- Hn']
-  -- apply h1
-  -/
-  sorry
 
 /--
 Monotonicity of the flat semantics in a base model (Base algebra with flat semantics )
