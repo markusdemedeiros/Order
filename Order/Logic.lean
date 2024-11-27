@@ -477,19 +477,18 @@ theorem Soundness.semp {φ : L B} :
 theorem Soundness.sassoc {φ : L B} :
     ∀ m : M, S.interp m <| imp (sep (sep φ ψ) χ) <| (sep φ (sep ψ χ)) := by
   simp [Kripke.BaseSemantics.interp_imp, Kripke.WeakSepSemantics.interp_sep]
-  intro m0 m1 m0m1 m2 m3 m231 m4 m5 m452
-  -- subst m231
-  -- subst m452
+  intro m0 m1 _ m2 m3 m231 m4 m5 m452
   intro Hφ Hψ Hχ
   exists m4
-  sorry
-  -- exists (m5 ∗ m3)
-  -- apply And.intro
-  -- · rw [assoc]
-  -- apply And.intro
-  -- · trivial
-  -- exists m5
-  -- exists m3
+  rcases Associative.assoc m452 m231 with ⟨ m6, m536, m461 ⟩
+  exists m6
+  apply And.intro
+  · trivial
+  apply And.intro
+  · trivial
+  exists m5
+  exists m3
+
 
 omit [BaseAlgebra M] in
 theorem Soundness.smono :
