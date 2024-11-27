@@ -444,15 +444,12 @@ theorem Soundness.sA1 {φ : L B} :
   intro H m1 m2 _ Hφ m3 m4 m234 Hψ
   apply H m4 m4 Reflexive.refl m2 m3 m234 Hφ Hψ
 
-
 omit [BaseAlgebra M] in
 theorem Soundness.sA2 {φ : L B} :
     (∀ m : M, (S.interp m <| imp φ (wand ψ χ))) -> (∀ m : M, S.interp m <| imp (sep φ ψ) χ) := by
   simp [Kripke.BaseSemantics.interp_imp, Kripke.WeakSepSemantics.interp_sep, Kripke.WeakWandSemantics.interp_wand]
-  intro H m1 m2 m0m1 m3 m4 m3m42 Hφ Hψ
-  sorry
-  -- subst m3m42
-  -- apply H m3 m3 Reflexive.refl Hφ m4 Hψ
+  intro H m1 m2 _ m3 m4 m342 Hφ Hψ
+  apply H m3 m3 Reflexive.refl Hφ m4 m2 m342 Hψ
 
 theorem Soundness.semp {φ : L B} :
     ∀ m : M, S.interp m <| iff (sep φ emp) φ := by
