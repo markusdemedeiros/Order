@@ -681,10 +681,13 @@ theorem IPSL_sound {B : Type} : @IPSL_deriv B bot -> False := by
 end IPSL_triv_model
 
 
+
 /-
 section DiscreteHeap
 
 abbrev Hfrag (Loc Val : Type u) : Type u := Loc -> Option Val
+
+def ufrag {Loc Val : Type} : Hfrag Loc Val := fun _ => none
 
 def dom {Loc Val : Type} (h : Hfrag Loc Val) (l : Loc) : Prop :=
   match (h l) with
@@ -703,6 +706,14 @@ def sep {Loc Val : Type} (h1 h2 h3 : Hfrag Loc Val) : Prop :=
   (∀ l, dom h3 l -> dom h1 l ∨ dom h2 l ) ∧
   (∀ l, dom h1 l -> h1 l = h3 l) ∧
   (∀ l, dom h2 l -> h2 l = h3 l)
+
+
+def join {Loc Val : Type} (h1 h2 : Hfrag Loc Val) : Hfrag Loc Val :=
+  fun l =>
+    match (h1 l) with
+    | some v => some v
+    | none => h2 l
+
 
 instance heap_extension_order (Loc Val : Type) : Kripke.Ord (Hfrag Loc Val) where
   kle := ext
@@ -735,39 +746,93 @@ instance heap_extension_SeparationAlgebra : SeparationAlgebra (Hfrag Loc Val) wh
     intros x y z xy xyz
     simp [SepC.sepC]
     intro H1 H2 H3 H4 H5 H6 H7 H8
-    sorry
+    exists (join y z)
+    apply And.intro
+    · simp_all only [disj]
+      apply And.intro
+      · sorry
+      apply And.intro
+      · sorry
+      apply And.intro
+      · sorry
+      · sorry
+    · sorry
   comm  := by
-    sorry
+    intros x y z
+    simp [SepC.sepC]
+    intro H1 H2 H3 H4
+    apply And.intro
+    · simp_all only [disj]
+      intro L H
+      apply H1
+      exact id (And.symm H)
+    apply And.intro
+    · intro l Hz
+      cases (H2 l Hz)
+      · right; trivial
+      · left; trivial
+    apply And.intro <;> trivial
 
 instance heap_extension_UCSA {Loc Val : Type} : UCSA (Hfrag Loc Val) where
   ucsa := by
     simp [Kripke.Ord.kle]
-    intros
-    sorry
-    -- exists unit
-    -- exists unit
+    intros h1 h2 h3 h4
+    simp [SepC.sepC]
+    intro H1 H2 H3 H4 H5
+    exists h1
+    exists h2
+    apply And.intro
+    · apply And.intro
+      · trivial
+      apply And.intro
+      · intro l H4
+        apply H2
+        simp [ext] at H5
+        sorry
+      apply And.intro
+      · sorry
+      · sorry
+    apply And.intro <;> simp [ext]
 
 instance heap_extension_DCSA {Loc Val : Type} : DCSA (Hfrag Loc Val) where
   dcsa := by
     simp [Kripke.Ord.kle]
-    intros
+    intros h1 h2 h3 h4 h5
+    simp [SepC.sepC]
+    intro H1 H2 H3 H4 H5 H6
     sorry
-    -- exists unit
 
 instance heap_extension_Unital {Loc Val : Type} : Unital (Hfrag Loc Val) where
   unital := by
-    intros
-    sorry
-    -- exists unit
-    -- simp [residue, Kripke.is_increasing, Kripke.Ord.kle]
-    -- exists unit
+    intro m
+    exists ufrag
+    apply And.intro
+    · simp [residue, SepC.sepC]
+      exists m
+      apply And.intro
+      · apply And.intro
+        · simp [disj, ufrag, dom]
+        apply And.intro
+        · intros
+          right
+          trivial
+        apply And.intro
+        · simp [dom, ufrag]
+        · intros; rfl
+      · apply Reflexive.refl
+    · simp [Kripke.is_increasing, SepC.sepC, _root_.sep]
+      intro x y _ _ _ H4
+      simp [Kripke.Ord.kle, ext]
+      intro l D1
+      simp [dom]
+      rw [<- H4 _ D1]
+      trivial
 
 instance heap_extension_BaseAlgebra {Loc Val : Type} : BaseAlgebra (Hfrag Loc Val) where
 
 end DiscreteHeap
+
 -/
-
-
 
 
 
